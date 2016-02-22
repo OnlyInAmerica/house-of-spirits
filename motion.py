@@ -14,40 +14,31 @@ logger = get_logger("motion")
 
 # Configuration
 
-MOTION_DIM_TIMEOUT = datetime.timedelta(minutes=10)
-MOTION_OFF_TIMEOUT = datetime.timedelta(minutes=16)
+DEFAULT_MOTION_TIMEOUT = datetime.timedelta(minutes=20)
 
 PIN_LIVING_ROOM = 4
+PIN_HALLWAY = 17
 # TODO : Following pins are not yet assigned
 PIN_BEDROOM = 5
 PIN_KITCHEN = 6
-PIN_HALLWAY = 7
 PIN_STAIRWAY = 8
 
-PIR_PINS = [PIN_LIVING_ROOM]
-
-PIN_TO_ROOM_MAP = {
-    PIN_LIVING_ROOM: ROOMS["Living Room"],
-    PIN_KITCHEN: ROOMS["Kitchen"],
-    PIN_BEDROOM: ROOMS["Bedroom"],
-    PIN_STAIRWAY: ROOMS["Stairway"],
-    PIN_HALLWAY: ROOMS["Hallway"]
-}
-
-# Pin -> RoomLights
-PIN_TO_ROOM_LIGHTS = {}
+ACTIVE_PIR_PINS = [PIN_LIVING_ROOM, PIN_HALLWAY]
 
 # RPi GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(PIN_LIVING_ROOM, GPIO.IN)
+for active_pin in ACTIVE_PIR_PINS:
+    GPIO.setup(active_pin, GPIO.IN)
 
 
 class RoomLights:
-    def __init__(self, room: Room, last_motion: datetime = get_local_time()):
+    def __init__(self, room: Room,
+                 last_motion: datetime = get_local_time(),
+                 motion_timeout: datetime.timedelta = DEFAULT_MOTION_TIMEOUT):
         self.room = room
-        self.dimmed = False
         self.last_motion = last_motion
         self.motion_started = False  # Keep track of started to ignore spurious stop events
+        self.motion_timeout = motion_timeout
 
     def switch(self, on: bool):
 
@@ -55,7 +46,6 @@ class RoomLights:
         if hue.get_light(self.room.lights[0], 'on') == on:
             return
 
-        self.dimmed = False
         if on:
             command = {'on': True, 'bri': 254}
         else:
@@ -65,10 +55,7 @@ class RoomLights:
         self.update(command)
 
     def dim(self, brightness: float = .5, transitiontime_s=5):
-        if self.dimmed:
-            return
 
-        self.dimmed = True
         logger.info("Dimming " + self.room.name + " lights.")
         self.update({
             'transitiontime': transitiontime_s * 10,  # Hue API uses deciseconds
@@ -77,34 +64,40 @@ class RoomLights:
         })
 
     def update(self, command: dict):
+        logger.info("Sending %s to %s", str(command), self.room.name)
         for light in self.room.lights:
             hue.set_light(light, add_circadian_hue_to_command(command))
 
 
-def on_motion(triggered_pin: int):
-    motion_start = GPIO.input(triggered_pin)
+PIN_TO_ROOM_LIGHTS = {
+    PIN_LIVING_ROOM: RoomLights(room=ROOMS["Living Room"], motion_timeout=datetime.timedelta(hours=1)),
+    PIN_KITCHEN: RoomLights(room=ROOMS["Kitchen"]),
+    PIN_BEDROOM: RoomLights(room=ROOMS["Bedroom"]),
+    PIN_STAIRWAY: RoomLights(room=ROOMS["Stairway"]),
+    PIN_HALLWAY: RoomLights(room=ROOMS["Hallway"], motion_timeout=datetime.timedelta(minutes=1))
+}
 
-    room = PIN_TO_ROOM_MAP[pin]
+
+def on_motion(triggered_pin: int):
+    now = get_local_time()
+
+    is_motion_start = GPIO.input(triggered_pin)
+
+    lights = PIN_TO_ROOM_LIGHTS[triggered_pin]
 
     # Ignore repeat motion stop events
-    if not motion_start and not room.motion_started:
+    if not is_motion_start and not lights.motion_started:
         return
-    room.motion_started = motion_start
-
-    now = get_local_time()
+    lights.motion_started = is_motion_start
+    lights.last_motion = now
 
     sunrise = get_local_sunrise() + datetime.timedelta(minutes=120)
     sunset = get_local_sunset() - datetime.timedelta(minutes=30)
 
-    message = room.name + " motion " + ("started" if motion_start else "stopped")
+    message = lights.room.name + " motion " + ("started" if is_motion_start else "stopped")
     logger.info(message)
 
-    if triggered_pin not in PIN_TO_ROOM_LIGHTS:
-        PIN_TO_ROOM_LIGHTS[triggered_pin] = RoomLights(room=room, last_motion=now)
-
-    lights = PIN_TO_ROOM_LIGHTS[triggered_pin]
-
-    if motion_start and (now > sunset or now < sunrise):
+    if is_motion_start and (now > sunset or now < sunrise):
         lights.switch(True)
 
 
@@ -112,18 +105,19 @@ def disable_inactive_lights():
     now_date = get_local_time()
     for pin, lights in PIN_TO_ROOM_LIGHTS.items():
         since_motion = now_date - lights.last_motion
-        if since_motion > MOTION_OFF_TIMEOUT:
+        if since_motion > lights.motion_timeout:
             lights.switch(on=False)
-        elif since_motion > MOTION_DIM_TIMEOUT:
-            lights.dim()
-
 
 try:
-    for pin in PIR_PINS:
+    for pin in ACTIVE_PIR_PINS:
         GPIO.add_event_detect(pin, GPIO.BOTH, callback=on_motion)
 
+    min_motion_timeout_room = min(PIN_TO_ROOM_LIGHTS.values(), key=lambda x: x.motion_timeout)
+    min_motion_timeout = min_motion_timeout_room.motion_timeout
+    logger.info("Min motion timeout %s", str(min_motion_timeout))
+
     while 1:
-        time.sleep(float(MOTION_DIM_TIMEOUT.seconds / 2))  # Should take into account (Off - dim) timeouts
+        time.sleep(float(min_motion_timeout.seconds) / 2)
         disable_inactive_lights()
 
 
