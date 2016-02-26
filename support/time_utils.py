@@ -27,11 +27,19 @@ def get_local_time() -> datetime:
     return datetime.datetime.now(LOCAL_TIMEZONE)
 
 
-def get_local_sunset(date=datetime.datetime.now(LOCAL_TIMEZONE)) -> datetime:
+def get_local_sunset(date=None) -> datetime:
+
+    if date is None:
+        date = datetime.datetime.now(LOCAL_TIMEZONE)
+
     return astral_city.sun(date=date, local=True)['sunset']
 
 
-def get_local_sunrise(date=datetime.datetime.now(LOCAL_TIMEZONE)) -> datetime:
+def get_local_sunrise(date=None) -> datetime:
+
+    if date is None:
+        date = datetime.datetime.now(LOCAL_TIMEZONE)
+
     return astral_city.sun(date=date, local=True)['sunrise']
 
 
