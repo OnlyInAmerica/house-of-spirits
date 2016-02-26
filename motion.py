@@ -16,14 +16,14 @@ logger = get_logger("motion")
 
 DEFAULT_MOTION_TIMEOUT = datetime.timedelta(minutes=20)
 
-PIN_LIVING_ROOM = 4
-PIN_HALLWAY = 17
+PIN_LIVING_ROOM = 17
+PIN_HALLWAY = 27
+PIN_KITCHEN = 4
 # TODO : Following pins are not yet assigned
 PIN_BEDROOM = 5
-PIN_KITCHEN = 6
 PIN_STAIRWAY = 8
 
-ACTIVE_PIR_PINS = [PIN_LIVING_ROOM, PIN_HALLWAY]
+ACTIVE_PIR_PINS = [PIN_LIVING_ROOM, PIN_KITCHEN, PIN_HALLWAY]
 
 # RPi GPIO
 GPIO.setmode(GPIO.BCM)
@@ -64,17 +64,18 @@ class RoomLights:
         })
 
     def update(self, command: dict):
-        logger.info("Sending %s to %s", str(command), self.room.name)
+        adjusted_command = add_circadian_hue_to_command(command)
+        logger.info("Sending %s to %s", str(adjusted_command), self.room.name)
         for light in self.room.lights:
-            hue.set_light(light, add_circadian_hue_to_command(command))
+            hue.set_light(light, adjusted_command)
 
 
 PIN_TO_ROOM_LIGHTS = {
     PIN_LIVING_ROOM: RoomLights(room=ROOMS["Living Room"], motion_timeout=datetime.timedelta(hours=1)),
-    PIN_KITCHEN: RoomLights(room=ROOMS["Kitchen"]),
+    PIN_KITCHEN: RoomLights(room=ROOMS["Kitchen"], motion_timeout=datetime.timedelta(minutes=15)),
     PIN_BEDROOM: RoomLights(room=ROOMS["Bedroom"]),
     PIN_STAIRWAY: RoomLights(room=ROOMS["Stairway"]),
-    PIN_HALLWAY: RoomLights(room=ROOMS["Hallway"], motion_timeout=datetime.timedelta(minutes=1))
+    PIN_HALLWAY: RoomLights(room=ROOMS["Hallway"], motion_timeout=datetime.timedelta(minutes=5))
 }
 
 
@@ -91,7 +92,7 @@ def on_motion(triggered_pin: int):
     lights.motion_started = is_motion_start
     lights.last_motion = now
 
-    sunrise = get_local_sunrise() + datetime.timedelta(minutes=120)
+    sunrise = get_local_sunrise() + datetime.timedelta(minutes=150)
     sunset = get_local_sunset() - datetime.timedelta(minutes=30)
 
     message = lights.room.name + " motion " + ("started" if is_motion_start else "stopped")
@@ -104,6 +105,9 @@ def on_motion(triggered_pin: int):
 def disable_inactive_lights():
     now_date = get_local_time()
     for pin, lights in PIN_TO_ROOM_LIGHTS.items():
+        if pin not in ACTIVE_PIR_PINS:
+            continue
+
         since_motion = now_date - lights.last_motion
         if since_motion > lights.motion_timeout:
             lights.switch(on=False)
