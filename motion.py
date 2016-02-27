@@ -93,7 +93,7 @@ def on_motion(triggered_pin: int):
     lights.last_motion = now
 
     sunrise = get_local_sunrise() + datetime.timedelta(minutes=150)
-    sunset = get_local_sunset() - datetime.timedelta(minutes=30)
+    sunset = get_local_sunset() - datetime.timedelta(minutes=50)
 
     message = lights.room.name + " motion " + ("started" if is_motion_start else "stopped")
     logger.info(message)
