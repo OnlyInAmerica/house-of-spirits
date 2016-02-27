@@ -21,6 +21,7 @@ astral_city = astral[CITY_NAME]
 
 SUNRISE = "sunrise"
 SUNSET = "sunset"
+DUSK = "dusk"
 
 
 def get_local_time() -> datetime:
@@ -35,6 +36,22 @@ def get_local_sunset(date=None) -> datetime:
     return astral_city.sun(date=date, local=True)['sunset']
 
 
+def get_local_dusk(date=None) -> datetime:
+
+    if date is None:
+        date = datetime.datetime.now(LOCAL_TIMEZONE)
+
+    return astral_city.sun(date=date, local=True)['dusk']
+
+
+def get_local_dawn(date=None) -> datetime:
+
+    if date is None:
+        date = datetime.datetime.now(LOCAL_TIMEZONE)
+
+    return astral_city.sun(date=date, local=True)['dawn']
+
+
 def get_local_sunrise(date=None) -> datetime:
 
     if date is None:
@@ -44,14 +61,17 @@ def get_local_sunrise(date=None) -> datetime:
 
 
 def get_next_circadian_event() -> (str, datetime):
-    sunset = get_local_sunset()
     sunrise = get_local_sunrise()
+    sunset = get_local_sunset()
+    dusk = get_local_dusk()
     now = get_local_time()
 
     if now < sunrise:
         return SUNRISE, sunrise
     elif now < sunset:
         return SUNSET, sunset
+    elif now < dusk:
+        return DUSK, dusk
     else:
         # sunrise tomorrow
         return SUNRISE, get_local_sunrise(now + datetime.timedelta(days=1))
