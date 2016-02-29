@@ -1,4 +1,6 @@
-# Home
+# House of Spirits
+
+A collection of light management programs designed for Raspberry Pi and Hue.
 
 ## Top-Level routines
 
