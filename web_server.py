@@ -1,7 +1,8 @@
+import copy
 from flask import Flask
 
-from support.circadian_utils import adjust_light_for_event
-from support.hue import hue
+from support.color import LIGHT_EVENING_XY, LIGHT_DAYTIME_XY
+from support.hue import hue, command_all_lights
 from support.time_utils import SUNSET, SUNRISE
 
 app = Flask(__name__)
@@ -9,15 +10,15 @@ app = Flask(__name__)
 
 @app.route("/evening")
 def sunset():
-    for light in hue.get_light_objects(mode='id'):
-        adjust_light_for_event(light, SUNSET)
+    command = copy.deepcopy(LIGHT_EVENING_XY)  # Don't alter reference command
+    command_all_lights(command)
     return "evening"
 
 
 @app.route("/daylight")
 def sunrise():
-    for light in hue.get_light_objects(mode='id'):
-        adjust_light_for_event(light, SUNRISE)
+    command = copy.deepcopy(LIGHT_DAYTIME_XY)  # Don't alter reference command
+    command_all_lights(command)
     return "daylight"
 
 
