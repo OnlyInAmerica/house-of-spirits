@@ -51,7 +51,10 @@ class Room:
         except FileNotFoundError:
             cloud_cover = 0
 
-        if is_motion_start and cloud_cover > .5 or (motion_datetime > sunset or motion_datetime < sunrise):
+        is_cloudy = cloud_cover
+        is_night = motion_datetime > sunset or motion_datetime < sunrise
+
+        if is_motion_start and (is_cloudy or is_night):
             self.switch(True)
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
