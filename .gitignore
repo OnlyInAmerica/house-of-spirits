@@ -73,3 +73,9 @@ target/
 
 # mocked raspberry pi module
 RPi/
+
+# API Secrets
+SECRETS.py
+
+# Forecast file
+forecast.json

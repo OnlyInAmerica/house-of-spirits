@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import copy
 
@@ -7,6 +8,7 @@ from support.hue import hue, COMMAND_FULL_ON, COMMAND_OFF
 
 from support.logger import get_logger
 from support.time_utils import get_local_sunrise, get_local_sunset
+from weather import FORECAST_FILENAME
 
 logger = get_logger("rooms")
 
@@ -41,7 +43,15 @@ class Room:
         sunrise = get_local_sunrise() + datetime.timedelta(minutes=150)
         sunset = get_local_sunset() - datetime.timedelta(minutes=60)
 
-        if is_motion_start and (motion_datetime > sunset or motion_datetime < sunrise):
+        try:
+            forecast_file = open(FORECAST_FILENAME, 'r')
+            forecast = json.loads(forecast_file.read())
+            forecast_file.close()
+            cloud_cover = forecast["cloud_cover"]
+        except FileNotFoundError:
+            cloud_cover = 0
+
+        if is_motion_start and cloud_cover > .5 or (motion_datetime > sunset or motion_datetime < sunrise):
             self.switch(True)
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
