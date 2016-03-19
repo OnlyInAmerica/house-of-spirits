@@ -1,26 +1,23 @@
-import copy
-from flask import Flask
+import flask
+from subprocess import Popen
 
-from support.color import LIGHT_EVENING_XY, LIGHT_DAYTIME_XY
-from support.hue import hue, command_all_lights
-from support.time_utils import SUNSET, SUNRISE
+from arrive import unlock
 
-app = Flask(__name__)
+from SECRETS import HTTPS_API_KEY, SSL_CERT_PEM, SSL_KEY_PEM
 
-
-@app.route("/evening")
-def sunset():
-    command = copy.deepcopy(LIGHT_EVENING_XY)  # Don't alter reference command
-    command_all_lights(command)
-    return "evening"
+app = flask.Flask(__name__)
 
 
-@app.route("/daylight")
-def sunrise():
-    command = copy.deepcopy(LIGHT_DAYTIME_XY)  # Don't alter reference command
-    command_all_lights(command)
-    return "daylight"
+@app.route("/arrive", methods=['POST'])
+def arrive():
+    if flask.request.values.get('token', default=None) == HTTPS_API_KEY:
+        Popen(["python3", "./arrive.py", "run"])  # async
+        return "arrive"
+    else:
+        flask.abort(403)
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    unlock()  # Unlock any unterminated locks from last run
+    context = (SSL_CERT_PEM, SSL_KEY_PEM)
+    app.run(host='0.0.0.0', port=5000, ssl_context=context, threaded=True, debug=True)

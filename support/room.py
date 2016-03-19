@@ -16,7 +16,6 @@ PIN_NO_PIN = -1
 
 
 class Room:
-
     def __init__(self,
                  name: str,
                  lights: [int],
@@ -36,7 +35,7 @@ class Room:
         self.motion_started = False
         self.last_motion = None
 
-    def on_motion(self, motion_datetime: datetime, is_motion_start=True):
+    def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
         self.last_motion = motion_datetime
         self.motion_started = is_motion_start
 

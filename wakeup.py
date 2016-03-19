@@ -2,10 +2,6 @@ import time
 
 import settings
 from support.color import LIGHT_DAYTIME_XY, LIGHT_EVENING_XY
-from support.logger import get_logger
-
-# Logging
-logger = get_logger("wakeup")
 
 # Start at evening hue, min brightness. Fade to daytime hue, full brightness
 # over 30m

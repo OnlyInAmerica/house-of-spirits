@@ -3,9 +3,10 @@ import datetime
 from support.logger import get_logger
 from support.time_utils import get_local_sunrise, get_local_sunset, get_local_time, get_local_dusk, get_local_dawn
 
-LIGHT_NIGHT_XY = [0.5304, 0.4068]
-LIGHT_EVENING_XY = [0.4904, 0.4075]
 LIGHT_DAYTIME_XY = [0.4506, 0.4081]
+LIGHT_EVENING_XY = [0.4904, 0.4075]
+LIGHT_NIGHT_XY = [0.5304, 0.4068]
+LIGHT_LATENIGHT_XY = [0.6185, 0.363]
 
 logger = get_logger("color")
 
@@ -26,6 +27,7 @@ def adjust_command_for_time(command: dict) -> dict:
 
         if now.hour < 5:  # In the wee hours, keep lights low
             command['bri'] = 124
+            command['xy'] = LIGHT_LATENIGHT_XY
 
     elif now > sunset or now < sunrise:
         command['xy'] = LIGHT_EVENING_XY

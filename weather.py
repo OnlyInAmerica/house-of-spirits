@@ -9,7 +9,6 @@ FORECAST_FILENAME = 'forecast.json'
 LAT = 37.877881
 LON = -122.269312
 
-
 forecast_file = open(FORECAST_FILENAME, 'w')
 current_time = get_local_time()
 forecast = forecastio.load_forecast(FORECAST_IO_KEY, LAT, LON, time=current_time, lazy=True)
