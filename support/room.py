@@ -85,5 +85,5 @@ class Room:
 
     def update(self, command: dict):
         logger.info("Sending %s to %s", str(command), self.name)
-        for light in self.lights:
-            hue.set_light(light, command)
+        result = hue.set_light(self.lights, command)
+        logger.info("Update result %s", str(result))
