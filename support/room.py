@@ -77,3 +77,9 @@ class Room:
         logger.info("Sending %s to %s", str(command), self.name)
         result = hue.set_light(self.lights, command)
         logger.info("Update result %s", str(result))
+
+    def is_lit(self):
+        for light in self.lights:
+            if hue.get_light(light, 'on'):
+                return True
+        return False
