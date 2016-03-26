@@ -1,14 +1,10 @@
 import datetime
-import json
 
 import copy
 
-from support.color import adjust_command_for_time
+from support.color import adjust_command_for_time, get_current_circadian_color
 from support.hue import hue, COMMAND_FULL_ON, COMMAND_OFF
-
 from support.logger import get_logger
-from support.time_utils import get_local_sunrise, get_local_sunset
-from weather import FORECAST_FILENAME
 
 logger = get_logger("rooms")
 
@@ -39,19 +35,10 @@ class Room:
         self.last_motion = motion_datetime
         self.motion_started = is_motion_start
 
-        sunrise = get_local_sunrise() + datetime.timedelta(minutes=150)
-        sunset = get_local_sunset() - datetime.timedelta(minutes=60)
+        circadian_color = get_current_circadian_color(date=motion_datetime)
 
-        try:
-            forecast_file = open(FORECAST_FILENAME, 'r')
-            forecast = json.loads(forecast_file.read())
-            forecast_file.close()
-            cloud_cover = forecast["cloud_cover"]
-        except FileNotFoundError:
-            cloud_cover = 0
-
-        if is_motion_start and cloud_cover > .5 or (motion_datetime > sunset or motion_datetime < sunrise):
-            self.switch(True)
+        if is_motion_start and circadian_color.brightness > 0:
+            self.switch(True, adjust_hue_for_time=False, extra_command=circadian_color.apply_to_command({}))
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
         if self.last_motion is None:
@@ -60,21 +47,24 @@ class Room:
         since_motion = as_of_date - self.last_motion
         return since_motion > self.motion_timeout
 
-    def switch(self, on: bool, adjust_hue_for_time=True):
+    def switch(self, on: bool, adjust_hue_for_time: bool=True, extra_command: dict = None):
 
         # Ignore requests that won't change state
         if hue.get_light(self.lights[0], 'on') == on:
             return
 
-        command = COMMAND_FULL_ON if on else COMMAND_OFF
-        command = copy.deepcopy(command)  # Don't alter reference command
+        command = copy.deepcopy(COMMAND_FULL_ON if on else COMMAND_OFF)  # Don't alter reference command
+        if extra_command is not None:
+            command.update(extra_command)
+
+        if adjust_hue_for_time:
+            command = adjust_command_for_time(command)
 
         logger.info("Powering " + ("on" if on else "off") + " " + self.name + " lights.")
 
-        adjusted_command = adjust_command_for_time(command)
-        self.update(adjusted_command)
+        self.update(command)
 
-    def dim(self, brightness: float = .5, transitiontime_s=5):
+    def dim(self, brightness: float = .5, transitiontime_s: int=5):
 
         logger.info("Dimming " + self.name + " lights.")
         self.update({
