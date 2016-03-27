@@ -80,12 +80,12 @@ CIRCADIAN_COLORS_ASC = [
                             color_xy=[0, 0],
                             brightness=0,
                             trigger_date_function=lambda date: get_local_sunrise(
-                                date) + datetime.timedelta(minutes=150)),
+                                date) + datetime.timedelta(minutes=200)),
 
     CircadianColor(name='Sunset',
                    color_xy=[0.4904, 0.4075],
                    brightness=255,
-                   trigger_date_function=lambda date: get_local_sunset(date)),
+                   trigger_date_function=lambda date: get_local_sunset(date) - datetime.timedelta(hours=1)),
 
     CircadianColor(name='Dusk',
                    color_xy=[0.5304, 0.4068],
