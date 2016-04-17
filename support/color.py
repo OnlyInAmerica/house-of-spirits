@@ -5,7 +5,7 @@ import copy
 from support.hue import COMMAND_OFF
 from support.logger import get_logger
 from support.time_utils import get_local_sunrise, get_local_sunset, get_local_dusk, get_local_dawn, \
-    LOCAL_TIMEZONE
+    LOCAL_TIMEZONE, get_local_noon
 from support.weather_utils import is_cloudy
 
 LIGHT_DAYTIME_XY = [0.4506, 0.4081]
@@ -58,7 +58,9 @@ class SunnyPlusCircadianColor(CircadianColor):
 
 
 # The pairs here should be in-order so that the next circadian event can be found by iterating through until
-# trigger_date_function returns a date before the current date
+# trigger_date_function returns a date before the current date.
+# Also be careful to refactor code when CircadianColor names are changed: components (LightsOnDuringDayRoom) have
+# special behavior linked to certain colors by names
 CIRCADIAN_COLORS_ASC = [
 
     CircadianColor(name='Night',
@@ -77,15 +79,19 @@ CIRCADIAN_COLORS_ASC = [
                    trigger_date_function=lambda date: get_local_sunrise(date)),
 
     SunnyPlusCircadianColor(name='Day',
-                            color_xy=[0, 0],
+                            color_xy=[0.4506, 0.4081],
                             brightness=0,
-                            trigger_date_function=lambda date: get_local_sunrise(
-                                date) + datetime.timedelta(minutes=200)),
+                            trigger_date_function=lambda date: get_local_noon(date) - datetime.timedelta(hours=1)),
+
+    CircadianColor(name='Late Afternoon',
+                   color_xy=[0.4506, 0.4081],
+                   brightness=255,
+                   trigger_date_function=lambda date: get_local_sunset(date) - datetime.timedelta(hours=1)),
 
     CircadianColor(name='Sunset',
                    color_xy=[0.4904, 0.4075],
                    brightness=255,
-                   trigger_date_function=lambda date: get_local_sunset(date) - datetime.timedelta(hours=1)),
+                   trigger_date_function=lambda date: get_local_sunset(date)),
 
     CircadianColor(name='Dusk',
                    color_xy=[0.5304, 0.4068],

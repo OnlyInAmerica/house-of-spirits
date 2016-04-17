@@ -1,7 +1,6 @@
 import datetime
 
-from support.room import Room
-
+from support.room import Room, LightsOnDuringDayRoom
 
 ROOMS = [
 
@@ -15,10 +14,10 @@ ROOMS = [
          motion_pin=27,
          motion_timeout=datetime.timedelta(minutes=5)),
 
-    Room(name='Kitchen',
-         lights=[16, 17, 19],
-         motion_pin=4,
-         motion_timeout=datetime.timedelta(minutes=5)),
+    LightsOnDuringDayRoom(name='Kitchen',
+                          lights=[16, 17, 19],
+                          motion_pin=4,
+                          motion_timeout=datetime.timedelta(minutes=5)),
 
     Room(name='Bedroom',
          lights=[4, 7, 15, 18]),

@@ -83,3 +83,22 @@ class Room:
             if hue.get_light(light, 'on'):
                 return True
         return False
+
+
+class LightsOnDuringDayRoom(Room):
+    """
+    A Room that interprets the lights-off 'Day' CircadianColor with full brightness lighting
+    """
+
+    def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
+        self.last_motion = motion_datetime
+        self.motion_started = is_motion_start
+
+        circadian_color = get_current_circadian_color(date=motion_datetime)
+
+        if is_motion_start:
+            command = circadian_color.apply_to_command({})
+            if circadian_color.name == 'Day':
+                command['bri'] = 255
+
+            self.switch(True, adjust_hue_for_time=False, extra_command=command)

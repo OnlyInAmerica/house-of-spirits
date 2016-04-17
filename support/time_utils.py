@@ -55,3 +55,10 @@ def get_local_sunrise(date: datetime = None) -> datetime:
 
     return astral_city.sun(date=date, local=True)['sunrise']
 
+
+def get_local_noon(date: datetime = None) -> datetime:
+    if date is None:
+        date = datetime.datetime.now(LOCAL_TIMEZONE)
+
+    return astral_city.sun(date=date, local=True)['noon']
+
