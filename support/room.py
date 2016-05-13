@@ -2,6 +2,7 @@ import datetime
 
 import copy
 
+from support import env
 from support.color import adjust_command_for_time, get_current_circadian_color
 from support.hue import hue, COMMAND_FULL_ON, COMMAND_OFF
 from support.logger import get_logger
@@ -102,3 +103,18 @@ class LightsOnDuringDayRoom(Room):
                 command['bri'] = 255
 
             self.switch(True, adjust_hue_for_time=False, extra_command=command)
+
+
+class GuestModeRoom(Room):
+    """
+    A Room that does not switch lights in response to motion while in Guest Mode.
+    """
+
+    def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
+        if not env.is_guest_mode():
+            super(self, GuestModeRoom).on_motion(motion_datetime=motion_datetime,
+                                                 is_motion_start=is_motion_start)
+
+    def is_motion_timed_out(self, as_of_date: datetime) -> bool:
+        if not env.is_guest_mode():
+            super(self, GuestModeRoom).is_motion_timed_out(as_of_date=as_of_date)

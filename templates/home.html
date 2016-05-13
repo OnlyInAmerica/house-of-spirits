@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+    <script>
+        var initialGuestMode = "{{guest_mode}}".localeCompare("True") ? true : false;
+        var setGuestMode = function(enabled) {
+            $.ajax({
+                type: "POST",
+                url: "/guest-mode",
+                data: JSON.stringify({ 'enabled': enabled }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "text",
+                success: function(data) {
+                    var newclick = function () {
+                        setGuestMode(!enabled);
+                    };
+                    $("#btn-guest-mode").attr('onclick', '').click(newclick);
+                    $("#btn-guest-mode").html((enabled ? 'Disable' : 'Enable') + ' Guest Mode');
+                },
+                failure: function(errMsg) {
+                    alert(errMsg);
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+<h1>Home Status</h1>
+<table>
+    {% for room in home_status %}
+    <tr>
+        <td>{{ room.name }}</td>
+        <td>{{ room.status|safe }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h1>Guest Mode</h1>
+<button id="btn-guest-mode" onclick="setGuestMode(initialGuestMode)">{% if guest_mode %}Disable{% else %}Enable{% endif %} Guest Mode</button>
+<br>
+<small>Guest mode disables motion sensing in Living Room.</small>
+</body>
+</html>

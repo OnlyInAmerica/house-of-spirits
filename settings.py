@@ -1,13 +1,13 @@
 import datetime
 
-from support.room import Room, LightsOnDuringDayRoom
+from support.room import Room, LightsOnDuringDayRoom, GuestModeRoom
 
 ROOMS = [
 
-    Room(name='Living Room',
-         lights=[1, 2, 3],
-         motion_pin=17,
-         motion_timeout=datetime.timedelta(minutes=20)),
+    GuestModeRoom(name='Living Room',
+                  lights=[1, 2, 3],
+                  motion_pin=17,
+                  motion_timeout=datetime.timedelta(minutes=20)),
 
     Room(name='Hallway',
          lights=[14],
