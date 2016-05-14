@@ -25,9 +25,9 @@ def is_local_request(request):
 def guest_mode():
     if is_local_request(flask.request):
         json = flask.request.get_json()
-        guest_mode = json.get('enabled', False)
-        env.set_guest_mode(guest_mode)
-        return "Guest mode is now %r" % guest_mode
+        enabled = json.get('enabled', False)
+        env.set_guest_mode(enabled)
+        return "Guest mode is now %r" % enabled
     else:
         logger.info('Guest Mode accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)

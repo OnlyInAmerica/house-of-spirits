@@ -111,10 +111,11 @@ class GuestModeRoom(Room):
     """
 
     def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
+        logger.info("GuestModeRoom on_motion. Guest mode %s", str(env.is_guest_mode()))
         if not env.is_guest_mode():
-            super(self, GuestModeRoom).on_motion(motion_datetime=motion_datetime,
+            super(GuestModeRoom, self).on_motion(motion_datetime=motion_datetime,
                                                  is_motion_start=is_motion_start)
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
         if not env.is_guest_mode():
-            super(self, GuestModeRoom).is_motion_timed_out(as_of_date=as_of_date)
+            super(GuestModeRoom, self).is_motion_timed_out(as_of_date=as_of_date)
