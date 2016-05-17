@@ -118,4 +118,5 @@ class GuestModeRoom(Room):
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
         if not env.is_guest_mode():
-            super(GuestModeRoom, self).is_motion_timed_out(as_of_date=as_of_date)
+            return super(GuestModeRoom, self).is_motion_timed_out(as_of_date=as_of_date)
+        return False
