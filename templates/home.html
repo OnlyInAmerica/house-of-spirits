@@ -1,47 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Home</title>
 
-    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
-    <script>
-        var initialGuestMode = "{{guest_mode}}".localeCompare("True") ? true : false;
-        var setGuestMode = function(enabled) {
-            $.ajax({
-                type: "POST",
-                url: "/guest-mode",
-                data: JSON.stringify({ 'enabled': enabled }),
-                contentType: "application/json; charset=utf-8",
-                dataType: "text",
-                success: function(data) {
-                    var newclick = function () {
-                        setGuestMode(!enabled);
-                    };
-                    $("#btn-guest-mode").attr('onclick', '').click(newclick);
-                    $("#btn-guest-mode").html((enabled ? 'Disable' : 'Enable') + ' Guest Mode');
-                },
-                failure: function(errMsg) {
-                    alert(errMsg);
-                }
-            });
-        };
-    </script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
 </head>
 <body>
-<h1>Home Status</h1>
-<table>
-    {% for room in home_status %}
-    <tr>
-        <td>{{ room.name }}</td>
-        <td>{{ room.status|safe }}</td>
-    </tr>
-    {% endfor %}
-</table>
 
-<h1>Guest Mode</h1>
-<button id="btn-guest-mode" onclick="setGuestMode(initialGuestMode)">{% if guest_mode %}Disable{% else %}Enable{% endif %} Guest Mode</button>
-<br>
-<small>Guest mode disables motion sensing in Living Room.</small>
+<script src="https://code.jquery.com/jquery-2.2.3.min.js"
+        integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.6.0/two.js"></script>
+
+<script>
+
+    var DARK_COLOR = "#3e3e3e";
+    var LIGHT_COLOR = "#ffa955";
+
+
+    var initialHomeState = {
+        'Living Room' : $.parseJSON("{{home_status.LivingRoom}}"),
+        'Bedroom' : $.parseJSON("{{home_status.Bedroom}}"),
+        'Hallway' : $.parseJSON("{{home_status.Hallway}}"),
+        'Kitchen' : $.parseJSON("{{home_status.Kitchen}}")
+    };
+//    var initialHomeState = {
+//        'Living Room': false,
+//        'Bedroom': false,
+//        'Hallway': false,
+//        'Kitchen': false
+//    };
+    var initialGuestMode = $.parseJSON("{{guest_mode}}");
+//    var initialGuestMode = true;
+
+    /* Local Testing */
+
+    // Make an instance of two and place it on the page.
+    var elem = document.getElementById('draw-shapes');
+    var params = {fullscreen: true};
+    var two = new Two(params).appendTo(document.body);
+
+    var WIDTH = two.width;
+    var HEIGHT = two.height;
+
+    var LIVING_ROOM_WIDTH = 520 / 2;
+    var LIVING_ROOM_HEIGHT = 340 / 2;
+
+    var KITCHEN_ROOM_WIDTH = (520 - 91) / 2;
+    var KITCHEN_ROOM_HEIGHT = 210 / 2;
+
+    var HALL_WIDTH = 91 / 2;
+    var HALL_HEIGHT = 396 / 2;
+
+    var BEDROOM_HEIGHT = 325 / 2;
+
+    var BOTTOM_OFFSET = LIVING_ROOM_HEIGHT + KITCHEN_ROOM_HEIGHT + BEDROOM_HEIGHT;///* Bottom Edge */ + (0.5 * (HEIGHT - (LIVING_ROOM_HEIGHT + KITCHEN_ROOM_HEIGHT + BEDROOM_HEIGHT))) + (0.5 * LIVING_ROOM_HEIGHT);
+    var LEFT_OFFSET = ((WIDTH - LIVING_ROOM_WIDTH) * .5) + LIVING_ROOM_WIDTH * 0.5;//((0.5 * WIDTH) - (LIVING_ROOM_WIDTH *.5));
+
+    var KITCHEN_ROOM_LEFT_OFFSET = LEFT_OFFSET - ((LIVING_ROOM_WIDTH - KITCHEN_ROOM_WIDTH) * .5);
+    var HALL_LEFT_OFFSET = KITCHEN_ROOM_LEFT_OFFSET + (KITCHEN_ROOM_WIDTH * .5) + (HALL_WIDTH * .5);
+
+    var livingRoom = two.makeRectangle(
+            LEFT_OFFSET,
+            BOTTOM_OFFSET,
+            LIVING_ROOM_WIDTH,
+            LIVING_ROOM_HEIGHT
+    );
+
+    var kitchen = two.makeRectangle(
+            KITCHEN_ROOM_LEFT_OFFSET,
+            BOTTOM_OFFSET - ((LIVING_ROOM_HEIGHT * .5) + (KITCHEN_ROOM_HEIGHT * .5)),
+            KITCHEN_ROOM_WIDTH,
+            KITCHEN_ROOM_HEIGHT
+    );
+
+    var hall = two.makeRectangle(
+            HALL_LEFT_OFFSET,
+            BOTTOM_OFFSET - ((LIVING_ROOM_HEIGHT * .5) + (HALL_HEIGHT * .5)),
+            HALL_WIDTH,
+            HALL_HEIGHT
+    );
+
+    var bedRoom = two.makeRectangle(
+            KITCHEN_ROOM_LEFT_OFFSET,
+            BOTTOM_OFFSET - ((LIVING_ROOM_HEIGHT * .5) + KITCHEN_ROOM_HEIGHT + (BEDROOM_HEIGHT * .5)),
+            KITCHEN_ROOM_WIDTH,
+            BEDROOM_HEIGHT
+    );
+
+    var guestMode = two.makeText('Guest Mode ' + (initialGuestMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 60, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+        family: 'sans-serif',
+        size: 12,
+        leading: 0
+    });
+
+    livingRoom.fill = getColorForOnState(initialHomeState['Living Room']);
+    livingRoom.linewidth = 2;
+    livingRoom.stroke = 'white';
+
+    bedRoom.fill = getColorForOnState(initialHomeState['Bedroom']);
+    bedRoom.linewidth = 2;
+    bedRoom.stroke = 'white';
+
+    kitchen.fill = getColorForOnState(initialHomeState['Kitchen']);
+    kitchen.linewidth = 2;
+    kitchen.stroke = 'white';
+
+    hall.fill = getColorForOnState(initialHomeState['Hallway']);
+    hall.linewidth = 2;
+    hall.stroke = 'white';
+
+    // Don't forget to tell two to render everything
+    // to the screen
+    two.update();
+
+    $(livingRoom._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isOn = handleRoomClick('Living Room');
+                livingRoom.fill = getColorForOnState(isOn);
+                two.update();
+            });
+
+    $(bedRoom._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isOn = handleRoomClick('Bedroom');
+                bedRoom.fill = getColorForOnState(isOn);
+                two.update();
+            });
+
+    $(hall._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isOn = handleRoomClick('Hallway');
+                hall.fill = getColorForOnState(isOn);
+                two.update();
+            });
+
+    $(kitchen._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isOn = handleRoomClick('Kitchen');
+                kitchen.fill = getColorForOnState(isOn);
+                two.update();
+            });
+
+    $(guestMode._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isGuestMode = !initialGuestMode;
+                setGuestMode(isGuestMode);
+                two.update();
+            });
+
+    function handleRoomClick(roomName) {
+        console.log(roomName + ' click!');
+        var isOn = !initialHomeState[roomName];
+        switchRoom(roomName, isOn);
+        return isOn;
+    }
+
+    function getColorForOnState(isOn) {
+        return isOn ? LIGHT_COLOR : DARK_COLOR;
+    }
+
+    function switchRoom(roomName, on) {
+        $.ajax({
+            type: "POST",
+            url: "/lights",
+            data: JSON.stringify({'rooms': [{'name': roomName, 'on': on}]}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "text",
+            success: function (data) {
+                initialHomeState[roomName] = on;
+                console.log('Update room ' + roomName + ' with state ' + on);
+                console.log(data);
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
+    function setGuestMode(enabled) {
+        $.ajax({
+            type: "POST",
+            url: "/guest-mode",
+            data: JSON.stringify({'enabled': enabled}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "text",
+            success: function (data) {
+                initialGuestMode = enabled;
+                guestMode.value = 'Guest Mode ' + (enabled ? 'Enabled' : 'Disabled');
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
+</script>
+
 </body>
 </html>

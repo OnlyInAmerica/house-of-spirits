@@ -1,8 +1,9 @@
-import json
+import re
+
+from functools import wraps
 
 import flask
 from subprocess import Popen
-
 
 from arrive import unlock
 
@@ -21,6 +22,31 @@ def is_local_request(request):
     return request_remote_addr.startswith('192.168.1.')
 
 
+@app.route("/lights", methods=['POST'])
+def lights():
+    """
+    example_lights_json = {
+        'rooms': [
+            {'name': 'Living Room', 'on': True},
+        ]
+    }
+    """
+    if is_local_request(flask.request):
+        json = flask.request.get_json()
+        rooms = json.get('rooms', [])
+        for json_room in rooms:
+            room_name = json_room['name']
+            on_state = json_room['on']
+
+            for room in ROOMS:
+                if room.name == room_name:
+                    room.switch(on_state)
+        return "Light commands sent."
+    else:
+        logger.info('Guest Mode accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
+        flask.abort(404)
+
+
 @app.route("/guest-mode", methods=['POST'])
 def guest_mode():
     if is_local_request(flask.request):
@@ -36,12 +62,11 @@ def guest_mode():
 @app.route("/", methods=['GET'])
 def home():
     if is_local_request(flask.request):
-        home_status = []
+        home_status = {}
         for room in ROOMS:
-            home_status.append({'name': room.name,
-                                'status': "On" if room.is_lit() else "Off"})
+            home_status[re.sub('[\s+]', '', room.name)] = "true" if room.is_lit() else "false"
 
-        guest_mode = env.is_guest_mode()
+        guest_mode = 'true' if env.is_guest_mode() else 'false'
         return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode)
     else:
         logger.info('Home accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
