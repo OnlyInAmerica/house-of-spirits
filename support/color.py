@@ -63,10 +63,15 @@ class SunnyPlusCircadianColor(CircadianColor):
 # special behavior linked to certain colors by names
 CIRCADIAN_COLORS_ASC = [
 
+    CircadianColor(name='Early Night',
+                   color_xy=[0.58, 0.38],
+                   brightness=255,
+                   trigger_date_function=lambda date: date.replace(hour=0, minute=0, second=0, microsecond=0)),  # Midnight of this day
+
     CircadianColor(name='Night',
                    color_xy=[0.6185, 0.363],
                    brightness=100,
-                   trigger_date_function=lambda date: date.replace(hour=0, minute=0, second=0, microsecond=0)),  # Midnight of this day
+                   trigger_date_function=lambda date: date.replace(hour=1, minute=0, second=0, microsecond=0)),
 
     CircadianColor(name='Dawn',
                    color_xy=[0.5304, 0.4068],
