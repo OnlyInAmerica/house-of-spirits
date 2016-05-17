@@ -162,7 +162,6 @@
             .click(function (e) {
                 var isGuestMode = !initialGuestMode;
                 setGuestMode(isGuestMode);
-                two.update();
             });
 
     function handleRoomClick(roomName) {
@@ -204,6 +203,7 @@
             success: function (data) {
                 initialGuestMode = enabled;
                 guestMode.value = 'Guest Mode ' + (enabled ? 'Enabled' : 'Disabled');
+                two.update();
             },
             failure: function (errMsg) {
                 alert(errMsg);
