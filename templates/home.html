@@ -205,7 +205,7 @@
     }
 
     function switchRoom(roomName, on) {
-        if (roomName === 'Stairway' && on) {
+        /*if (roomName === 'Stairway' && on) {
             // Use the /arrive endpoint to turn on stariwell only for 30m
             $.ajax({
                 type: "POST",
@@ -219,7 +219,7 @@
                     alert(errMsg);
                 }
             });
-        } else {
+        } else { */
             $.ajax({
                 type: "POST",
                 url: "/lights",
@@ -235,7 +235,7 @@
                     alert(errMsg);
                 }
             });
-        }
+        //}
     }
 
     function setGuestMode(enabled) {
