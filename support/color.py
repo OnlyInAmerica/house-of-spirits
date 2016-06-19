@@ -84,7 +84,7 @@ CIRCADIAN_COLORS_ASC = [
                    trigger_date_function=lambda date: get_local_sunrise(date)),
 
     SunnyPlusCircadianColor(name='Day',
-                            color_xy=[0.4506, 0.4081],
+                            color_xy=[0.396, 0.3859],
                             brightness=0,
                             trigger_date_function=lambda date: get_local_noon(date) - datetime.timedelta(hours=1)),
 
