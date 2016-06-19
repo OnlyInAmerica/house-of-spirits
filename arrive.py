@@ -1,11 +1,9 @@
-import os
+import sys
 import time
 
-import sys
-
 import settings
-
 from support.hue import COMMAND_FULL_ON, COMMAND_OFF
+from support.lock import is_locked, lock, unlock
 from support.logger import get_logger
 
 '''
@@ -16,29 +14,8 @@ Turn on stairwell for 30m, then turn off
 logger = get_logger("arrive")
 
 ON_TIME_S = 60 * 20  # 30m
-LOCKFILE = 'arrive_lockfile'
 
-
-def is_locked():
-    try:
-        lock_file = open(LOCKFILE, 'r')
-        lock_file.close()
-        return True
-
-    except FileNotFoundError:
-        return False
-
-
-def lock():
-    lock_file = open(LOCKFILE, 'w')
-    lock_file.close()
-
-
-def unlock():
-    try:
-        os.remove(LOCKFILE)
-    except FileNotFoundError:
-        pass
+PROCESS_NAME = 'arrive'  # For use with lockfile to prevent multiple simultaneous operations
 
 
 def perform_arrival():
@@ -56,10 +33,10 @@ if __name__ == "__main__":
     # Invoke with `python arrive.py run` to run arrive program
     is_run_command = len(sys.argv) == 2 and sys.argv[1] == 'run'
 
-    if is_run_command and not is_locked():
-        lock()
+    if is_run_command and not is_locked(PROCESS_NAME):
+        lock(PROCESS_NAME)
         logger.info("Performing arrival")
         perform_arrival()
-        unlock()
+        unlock(PROCESS_NAME)
     elif is_locked():
         logger.info("Aborting run: lockfile exists")

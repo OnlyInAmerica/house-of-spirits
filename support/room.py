@@ -33,6 +33,11 @@ class Room:
         self.last_motion = None
 
     def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
+
+        # Ignore motion events in party mode
+        if env.is_party_mode():
+            return
+
         self.last_motion = motion_datetime
         self.motion_started = is_motion_start
 
@@ -45,13 +50,17 @@ class Room:
         if self.last_motion is None:
             return False  # Don't consider a room that never saw motion as timed out
 
+        #  Lights cannot time out in party mode
+        if env.is_party_mode():
+            return False
+
         since_motion = as_of_date - self.last_motion
         return since_motion > self.motion_timeout
 
     def switch(self, on: bool, adjust_hue_for_time: bool=True, extra_command: dict = None):
 
         # Ignore requests that won't change state
-        if hue.get_light(self.lights[0], 'on') == on:
+        if self.is_lit() == on:
             return
 
         command = copy.deepcopy(COMMAND_FULL_ON if on else COMMAND_OFF)  # Don't alter reference command

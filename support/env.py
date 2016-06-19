@@ -23,13 +23,28 @@ def get_state() -> dict:
 
 
 def is_guest_mode() -> bool:
-    state = get_state()
-    guest_mode = state.get('guest_mode', False)
-    return guest_mode
+    return _get_value('guest_mode')
 
 
 def set_guest_mode(enabled: bool):
-    state = get_state()
-    state['guest_mode'] = enabled
-    save_state(state)
+    _set_value('guest_mode', enabled)
 
+
+def is_party_mode() -> bool:
+    return _get_value('party_mode')
+
+
+def set_party_mode(enabled: bool):
+    _set_value('party_mode', enabled)
+
+
+def _get_value(key: str):
+    state = get_state()
+    value = state.get(key, False)
+    return value
+
+
+def _set_value(key: str, value):
+    state = get_state()
+    state[key] = value
+    save_state(state)

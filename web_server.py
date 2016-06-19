@@ -1,25 +1,73 @@
-import re
-
-from functools import wraps
-
-import flask
+import json
 from subprocess import Popen
 
-from arrive import unlock
+import copy
+import flask
+import re
 
 from SECRETS import HTTPS_API_KEY, SSL_CERT_PEM, SSL_KEY_PEM
+from arrive import unlock
 from settings import ROOMS
 from support import env
+from support.color import get_current_circadian_color
+from support.hue import command_all_lights, COMMAND_FULL_ON
 from support.logger import get_logger
+from support.time_utils import get_local_time
 
 app = flask.Flask(__name__)
 
 logger = get_logger("web_server")
 
+party_process = None  # Party mode process
+
 
 def is_local_request(request):
     request_remote_addr = request.environ['REMOTE_ADDR']
     return request_remote_addr.startswith('192.168.1.')
+
+
+def get_home_status(template_friendly_dict: bool) -> dict:
+    """
+    :param template_friendly_dict: whether to create a template friendly cict. This involves representing booleans
+    as "true"/"false" strings and stripping spaces from keys. For template dicts,
+    we need to use string values, for json return we can use bool
+    """
+
+    home_status = {}
+    for room in ROOMS:
+        val = room.is_lit()
+        key = room.name
+        if template_friendly_dict:
+            val = "true" if val else "false"
+            key = re.sub('[\s+]', '', key)
+
+        home_status[key] = val
+    logger.info(home_status)
+    return home_status
+
+
+@app.route("/party-mode", methods=['POST'])
+def party():
+    global party_process
+    json = flask.request.get_json()
+    enabled = json.get('enabled', False)
+    logger.info('Got party state %r' % enabled)
+    if enabled and not env.is_party_mode():
+        # Start party XD
+        party_process = Popen(["python3", "./animate_web.py", "run"])  # async
+        env.set_party_mode(True)
+    elif not enabled and env.is_party_mode():
+        # Stop party :(
+        env.set_party_mode(False)
+        if party_process is not None:
+            party_process.kill()
+            party_process = None
+
+        # Return lights to circadian color
+        command = copy.deepcopy(COMMAND_FULL_ON)
+        circadian_color = get_current_circadian_color(date=get_local_time())
+        command_all_lights(circadian_color.apply_to_command(command))
+    return "Party mode is now %r" % enabled
 
 
 @app.route("/lights", methods=['POST'])
@@ -34,12 +82,15 @@ def lights():
     if is_local_request(flask.request):
         json = flask.request.get_json()
         rooms = json.get('rooms', [])
+        logger.info('Switching rooms %s', rooms)
         for json_room in rooms:
             room_name = json_room['name']
             on_state = json_room['on']
 
             for room in ROOMS:
+                # Strip whitespace
                 if room.name == room_name:
+                    logger.info('Switching room %s', room.name)
                     room.switch(on_state)
         return "Light commands sent."
     else:
@@ -59,15 +110,22 @@ def guest_mode():
         flask.abort(404)
 
 
+@app.route("/home-state", methods=['GET'])
+def home_status():
+    if is_local_request(flask.request):
+        home_status = get_home_status(template_friendly_dict=False)  # bools safe for json
+        return json.dumps(home_status)
+    else:
+        flask.abort(404)
+
+
 @app.route("/", methods=['GET'])
 def home():
     if is_local_request(flask.request):
-        home_status = {}
-        for room in ROOMS:
-            home_status[re.sub('[\s+]', '', room.name)] = "true" if room.is_lit() else "false"
-
+        home_status = get_home_status(template_friendly_dict=True)  # Template engine requires string values
         guest_mode = 'true' if env.is_guest_mode() else 'false'
-        return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode)
+        party_mode = 'true' if env.is_party_mode() else 'false'
+        return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode, party_mode=party_mode)
     else:
         logger.info('Home accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)
@@ -100,6 +158,8 @@ def arrive():
 
 
 if __name__ == "__main__":
-    unlock()  # Unlock any unterminated locks from last run
+    from arrive import PROCESS_NAME as ARRIVE_PROCESS_NAME
+    unlock(ARRIVE_PROCESS_NAME)  # Unlock arrival locks from last run
+    env.set_party_mode(False)
     context = (SSL_CERT_PEM, SSL_KEY_PEM)
     app.run(host='0.0.0.0', port=5000, ssl_context=context, threaded=True, debug=True)

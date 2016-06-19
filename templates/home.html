@@ -29,13 +29,13 @@
     var LIGHT_COLOR = "#ffa955";
 
 
-        var initialHomeState = {
-            'Living Room': $.parseJSON("{{home_status.LivingRoom}}"),
-            'Bedroom': $.parseJSON("{{home_status.Bedroom}}"),
-            'Hallway': $.parseJSON("{{home_status.Hallway}}"),
-            'Kitchen': $.parseJSON("{{home_status.Kitchen}}"),
-            'Stairway': $.parseJSON("{{home_status.Stairway}}")
-        };
+    var initialHomeState = {
+        'Living Room': $.parseJSON("{{home_status.LivingRoom}}"),
+        'Bedroom': $.parseJSON("{{home_status.Bedroom}}"),
+        'Hallway': $.parseJSON("{{home_status.Hallway}}"),
+        'Kitchen': $.parseJSON("{{home_status.Kitchen}}"),
+        'Stairway': $.parseJSON("{{home_status.Stairway}}")
+    };
 //     For testing html without template rendering
 //    var initialHomeState = {
 //        'Living Room': false,
@@ -45,8 +45,9 @@
 //        'Stairway': false
 //    };
         var initialGuestMode = $.parseJSON("{{guest_mode}}");
-    // For testing html without template rendering
-    //var initialGuestMode = true;
+        var initialPartyMode = $.parseJSON("{{party_mode}}");
+//     For testing html without template rendering
+//    var initialGuestMode = true;
 
     /* Local Testing */
 
@@ -123,29 +124,14 @@
         fill: '#828282'
     });
 
-    livingRoom.fill = getColorForOnState(initialHomeState['Living Room']);
-    livingRoom.linewidth = 2;
-    livingRoom.stroke = 'white';
+    var partyMode = two.makeText('Party Mode ' + (initialPartyMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 34, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 50, {
+        family: 'sans-serif',
+        size: 12,
+        leading: 0,
+        fill: '#828282'
+    });
 
-    bedRoom.fill = getColorForOnState(initialHomeState['Bedroom']);
-    bedRoom.linewidth = 2;
-    bedRoom.stroke = 'white';
-
-    kitchen.fill = getColorForOnState(initialHomeState['Kitchen']);
-    kitchen.linewidth = 2;
-    kitchen.stroke = 'white';
-
-    hall.fill = getColorForOnState(initialHomeState['Hallway']);
-    hall.linewidth = 2;
-    hall.stroke = 'white';
-
-    stairWay.fill = getColorForOnState(initialHomeState['Stairway']);
-    stairWay.linewidth = 2;
-    stairWay.stroke = 'white';
-
-    // Don't forget to tell two to render everything
-    // to the screen
-    two.update();
+    updateUiWithHomeState(initialHomeState);
 
     $(livingRoom._renderer.elem)
             .css('cursor', 'pointer')
@@ -192,6 +178,13 @@
             .click(function (e) {
                 var isGuestMode = !initialGuestMode;
                 setGuestMode(isGuestMode);
+            });
+
+    $(partyMode._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isPartyMode = !initialPartyMode;
+                setPartyMode(isPartyMode);
             });
 
     function handleRoomClick(roomName) {
@@ -255,6 +248,71 @@
                 alert(errMsg);
             }
         });
+    }
+
+    function setPartyMode(enabled) {
+        $.ajax({
+            type: "POST",
+            url: "/party-mode",
+            data: JSON.stringify({'enabled': enabled}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "text",
+            success: function (data) {
+                initialPartyMode = enabled;
+                partyMode.value = 'Party Mode ' + (enabled ? 'Enabled' : 'Disabled');
+                two.update();
+                // Make sure party-mode state is propagated before polling
+                setTimeout(updateHomeState, 1000);
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
+    function updateHomeState() {
+        $.ajax({
+            type: "GET",
+            url: "/home-state",
+            dataType: "json",
+            success: function (homeState) {
+                console.log(homeState);
+                initialHomeState = homeState;
+                updateUiWithHomeState(homeState);
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
+    function updateUiWithHomeState(homestate) {
+
+        initialHomeState = homestate;
+
+        livingRoom.fill = getColorForOnState(homestate['Living Room']);
+        livingRoom.linewidth = 2;
+        livingRoom.stroke = 'white';
+
+        bedRoom.fill = getColorForOnState(homestate['Bedroom']);
+        bedRoom.linewidth = 2;
+        bedRoom.stroke = 'white';
+
+        kitchen.fill = getColorForOnState(homestate['Kitchen']);
+        kitchen.linewidth = 2;
+        kitchen.stroke = 'white';
+
+        hall.fill = getColorForOnState(homestate['Hallway']);
+        hall.linewidth = 2;
+        hall.stroke = 'white';
+
+        stairWay.fill = getColorForOnState(homestate['Stairway']);
+        stairWay.linewidth = 2;
+        stairWay.stroke = 'white';
+
+        // Don't forget to tell two to render everything
+        // to the screen
+        two.update();
     }
 
 </script>
