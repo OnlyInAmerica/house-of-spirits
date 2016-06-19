@@ -73,6 +73,20 @@ def home():
         flask.abort(404)
 
 
+@app.route("/arrive-local", methods=['POST'])
+def arrive_local():
+    """
+    Like arrive, but dispenses with HTTPS token checking in favor of only allowing
+    local network requests
+    """
+    if is_local_request(flask.request):
+        Popen(["python3", "./arrive.py", "run"])  # async
+        return "arrive"
+    else:
+        logger.info('Arrive-local accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
+        flask.abort(404)
+
+
 @app.route("/arrive", methods=['POST'])
 def arrive():
     json = flask.request.get_json()

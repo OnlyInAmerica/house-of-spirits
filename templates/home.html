@@ -16,7 +16,7 @@
     <![endif]-->
 
 </head>
-<body>
+<body bgcolor="#f3f3f3">
 
 <script src="https://code.jquery.com/jquery-2.2.3.min.js"
         integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
@@ -29,20 +29,24 @@
     var LIGHT_COLOR = "#ffa955";
 
 
-    var initialHomeState = {
-        'Living Room' : $.parseJSON("{{home_status.LivingRoom}}"),
-        'Bedroom' : $.parseJSON("{{home_status.Bedroom}}"),
-        'Hallway' : $.parseJSON("{{home_status.Hallway}}"),
-        'Kitchen' : $.parseJSON("{{home_status.Kitchen}}")
-    };
+        var initialHomeState = {
+            'Living Room': $.parseJSON("{{home_status.LivingRoom}}"),
+            'Bedroom': $.parseJSON("{{home_status.Bedroom}}"),
+            'Hallway': $.parseJSON("{{home_status.Hallway}}"),
+            'Kitchen': $.parseJSON("{{home_status.Kitchen}}"),
+            'Stairway': $.parseJSON("{{home_status.Stairway}}")
+        };
+//     For testing html without template rendering
 //    var initialHomeState = {
 //        'Living Room': false,
 //        'Bedroom': false,
 //        'Hallway': false,
-//        'Kitchen': false
+//        'Kitchen': false,
+//        'Stairway': false
 //    };
-    var initialGuestMode = $.parseJSON("{{guest_mode}}");
-//    var initialGuestMode = true;
+        var initialGuestMode = $.parseJSON("{{guest_mode}}");
+    // For testing html without template rendering
+    //var initialGuestMode = true;
 
     /* Local Testing */
 
@@ -65,11 +69,16 @@
 
     var BEDROOM_HEIGHT = 325 / 2;
 
+    var STAIRWAY_WIDTH = 120 / 2;
+    var STAIRWAY_HEIGHT = 490 / 2;
+
     var BOTTOM_OFFSET = LIVING_ROOM_HEIGHT + KITCHEN_ROOM_HEIGHT + BEDROOM_HEIGHT;///* Bottom Edge */ + (0.5 * (HEIGHT - (LIVING_ROOM_HEIGHT + KITCHEN_ROOM_HEIGHT + BEDROOM_HEIGHT))) + (0.5 * LIVING_ROOM_HEIGHT);
-    var LEFT_OFFSET = ((WIDTH - LIVING_ROOM_WIDTH) * .5) + LIVING_ROOM_WIDTH * 0.5;//((0.5 * WIDTH) - (LIVING_ROOM_WIDTH *.5));
+    var LEFT_OFFSET = ((WIDTH - LIVING_ROOM_WIDTH - HALL_WIDTH) * .5) + LIVING_ROOM_WIDTH * 0.5;//((0.5 * WIDTH) - (LIVING_ROOM_WIDTH *.5));
 
     var KITCHEN_ROOM_LEFT_OFFSET = LEFT_OFFSET - ((LIVING_ROOM_WIDTH - KITCHEN_ROOM_WIDTH) * .5);
     var HALL_LEFT_OFFSET = KITCHEN_ROOM_LEFT_OFFSET + (KITCHEN_ROOM_WIDTH * .5) + (HALL_WIDTH * .5);
+
+    var STAIRWAY_LEFT_OFFSET = HALL_LEFT_OFFSET + ((HALL_WIDTH * .5) + (STAIRWAY_WIDTH * .5));
 
     var livingRoom = two.makeRectangle(
             LEFT_OFFSET,
@@ -99,10 +108,18 @@
             BEDROOM_HEIGHT
     );
 
-    var guestMode = two.makeText('Guest Mode ' + (initialGuestMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 60, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+    var stairWay = two.makeRectangle(
+            STAIRWAY_LEFT_OFFSET,
+            ((two.height - STAIRWAY_HEIGHT) * .5) + (STAIRWAY_HEIGHT * 0.496), // wtf
+            STAIRWAY_WIDTH,
+            STAIRWAY_HEIGHT
+    );
+
+    var guestMode = two.makeText('Guest Mode ' + (initialGuestMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 34, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
         size: 12,
-        leading: 0
+        leading: 0,
+        fill: '#828282'
     });
 
     livingRoom.fill = getColorForOnState(initialHomeState['Living Room']);
@@ -120,6 +137,10 @@
     hall.fill = getColorForOnState(initialHomeState['Hallway']);
     hall.linewidth = 2;
     hall.stroke = 'white';
+
+    stairWay.fill = getColorForOnState(initialHomeState['Stairway']);
+    stairWay.linewidth = 2;
+    stairWay.stroke = 'white';
 
     // Don't forget to tell two to render everything
     // to the screen
@@ -157,6 +178,14 @@
                 two.update();
             });
 
+    $(stairWay._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isOn = handleRoomClick('Stairway');
+                stairWay.fill = getColorForOnState(isOn);
+                two.update();
+            });
+
     $(guestMode._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
@@ -176,21 +205,37 @@
     }
 
     function switchRoom(roomName, on) {
-        $.ajax({
-            type: "POST",
-            url: "/lights",
-            data: JSON.stringify({'rooms': [{'name': roomName, 'on': on}]}),
-            contentType: "application/json; charset=utf-8",
-            dataType: "text",
-            success: function (data) {
-                initialHomeState[roomName] = on;
-                console.log('Update room ' + roomName + ' with state ' + on);
-                console.log(data);
-            },
-            failure: function (errMsg) {
-                alert(errMsg);
-            }
-        });
+        if (roomName === 'Stairway' && on) {
+            // Use the /arrive endpoint to turn on stariwell only for 30m
+            $.ajax({
+                type: "POST",
+                url: "/arrive-local",
+                dataType: "text",
+                success: function (data) {
+                    console.log('Arrive result ' + data);
+                    initialHomeState[roomName] = on;
+                },
+                failure: function (errMsg) {
+                    alert(errMsg);
+                }
+            });
+        } else {
+            $.ajax({
+                type: "POST",
+                url: "/lights",
+                data: JSON.stringify({'rooms': [{'name': roomName, 'on': on}]}),
+                contentType: "application/json; charset=utf-8",
+                dataType: "text",
+                success: function (data) {
+                    initialHomeState[roomName] = on;
+                    console.log('Update room ' + roomName + ' with state ' + on);
+                    console.log(data);
+                },
+                failure: function (errMsg) {
+                    alert(errMsg);
+                }
+            });
+        }
     }
 
     function setGuestMode(enabled) {
