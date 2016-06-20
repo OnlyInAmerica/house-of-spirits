@@ -25,3 +25,8 @@ ROOMS = [
     Room(name='Stairway',
          lights=[13]),
 ]
+
+ROOM_GRAPH = {
+    'Living Room': ['Hallway'],
+    'Kitchen': ['Hallway']
+}
