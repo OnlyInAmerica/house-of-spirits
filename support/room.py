@@ -110,6 +110,7 @@ class LightsOnDuringDayRoom(Room):
             if circadian_color.name == 'Day':
                 command['on'] = True
                 command['bri'] = 255
+                command['xy'] = circadian_color.color_xy
 
             self.switch(True, adjust_hue_for_time=False, extra_command=command)
 

@@ -39,12 +39,17 @@ class CircadianColor:
         return True
 
     def apply_to_command(self, command: dict) -> dict:
-        # Cannot set properties if power off
-        if self.brightness == 0:
+        # Cannot set properties if power off.
+        if self.brightness == 0 and not command.get('on', False):
+            # If not an explicit 'on' command and circadian bri 0, treat as 'off'
             return copy.deepcopy(COMMAND_OFF)
+        elif self.brightness == 0 and command.get('on', False):
+            # If an explicit on command and the circadian bri is 0, set to full bri
+            command['bri'] = 255
+        else:
+            command['bri'] = self.brightness
 
         command['xy'] = copy.deepcopy(self.color_xy)  # Don't allow client to modify self.color_xy
-        command['bri'] = self.brightness
         return command
 
 
