@@ -1,18 +1,17 @@
 import datetime
 
+import astral
 from pytz import timezone
 
 # from enum import Enum
-
-from astral import Astral
 
 CITY_NAME = 'San Francisco'  # For Sunrise / Sunset detection. Supported cities: http://pythonhosted.org/astral/
 
 LOCAL_TIMEZONE = timezone('US/Pacific')  # For logging datetimes
 
-astral = Astral()
-astral.solar_depression = 'civil'
-astral_city = astral[CITY_NAME]
+_astral = astral.Astral()
+_astral.solar_depression = 'civil'
+astral_city = _astral[CITY_NAME]
 
 # Enums aren't a thing until python 3.5. RPi repository only has 3.4
 # class CircadianEvent(Enum):
@@ -62,3 +61,14 @@ def get_local_noon(date: datetime = None) -> datetime:
 
     return astral_city.sun(date=date, local=True)['noon']
 
+
+def get_time_at_first_lit_elevation(date: datetime = None):
+    return astral_city.time_at_elevation(elevation=10, date=date)
+
+
+def get_local_solar_elevation(date: datetime = None):
+    return astral_city.solar_elevation(dateandtime=date)
+
+
+def get_time_at_elevation(elevation_deg: float, date: datetime = None, direction=astral.SUN_SETTING):
+    return astral_city.time_at_elevation(elevation_deg, direction=direction, date=date, local=True)

@@ -1,11 +1,11 @@
 import datetime
 
 import copy
+from astral import SUN_RISING
 
 from support.hue import COMMAND_OFF
 from support.logger import get_logger
-from support.time_utils import get_local_sunrise, get_local_sunset, get_local_dusk, get_local_dawn, \
-    LOCAL_TIMEZONE, get_local_noon
+from support.time_utils import get_local_sunrise, get_local_sunset, LOCAL_TIMEZONE, get_time_at_elevation
 from support.weather_utils import is_cloudy
 
 LIGHT_DAYTIME_XY = [0.4506, 0.4081]
@@ -81,7 +81,7 @@ CIRCADIAN_COLORS_ASC = [
     CircadianColor(name='Dawn',
                    color_xy=[0.5304, 0.4068],
                    brightness=100,
-                   trigger_date_function=lambda date: get_local_dawn(date) - datetime.timedelta(hours=1)),
+                   trigger_date_function=lambda date: get_time_at_elevation(-20, date=date, direction=SUN_RISING)),
 
     CircadianColor(name='Sunrise',
                    color_xy=[0.4506, 0.4081],
@@ -91,12 +91,12 @@ CIRCADIAN_COLORS_ASC = [
     SunnyPlusCircadianColor(name='Day',
                             color_xy=[0.396, 0.3859],
                             brightness=0,
-                            trigger_date_function=lambda date: get_local_noon(date) - datetime.timedelta(hours=1)),
+                            trigger_date_function=lambda date: get_time_at_elevation(20, date=date, direction=SUN_RISING)),
 
     CircadianColor(name='Late Afternoon',
                    color_xy=[0.4506, 0.4081],
                    brightness=255,
-                   trigger_date_function=lambda date: get_local_sunset(date) - datetime.timedelta(hours=1)),
+                   trigger_date_function=lambda date: get_time_at_elevation(20, date=date)),
 
     CircadianColor(name='Sunset',
                    color_xy=[0.4904, 0.4075],
@@ -106,7 +106,7 @@ CIRCADIAN_COLORS_ASC = [
     CircadianColor(name='Dusk',
                    color_xy=[0.5304, 0.4068],
                    brightness=255,
-                   trigger_date_function=lambda date: get_local_dusk(date) + datetime.timedelta(hours=2))
+                   trigger_date_function=lambda date: get_time_at_elevation(-20, date=date))
 ]
 
 
