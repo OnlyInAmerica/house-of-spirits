@@ -7,6 +7,7 @@ import re
 
 from SECRETS import HTTPS_API_KEY, SSL_CERT_PEM, SSL_KEY_PEM
 from arrive import unlock
+from gevent import pywsgi
 from settings import ROOMS
 from support import env
 from support.color import get_current_circadian_color
@@ -159,7 +160,9 @@ def arrive():
 
 if __name__ == "__main__":
     from arrive import PROCESS_NAME as ARRIVE_PROCESS_NAME
+
     unlock(ARRIVE_PROCESS_NAME)  # Unlock arrival locks from last run
     env.set_party_mode(False)
-    context = (SSL_CERT_PEM, SSL_KEY_PEM)
-    app.run(host='0.0.0.0', port=5000, ssl_context=context, threaded=True, debug=True)
+
+    server = pywsgi.WSGIServer(('0.0.0.0', 5000), app, keyfile=SSL_KEY_PEM, certfile=SSL_CERT_PEM)
+    server.serve_forever()
