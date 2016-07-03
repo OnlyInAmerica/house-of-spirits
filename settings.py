@@ -1,6 +1,6 @@
 import datetime
 
-from support.room import Room, LightsOnDuringDayRoom, GuestModeRoom
+from support.room import Room, LightsOnDuringDayRoom, GuestModeRoom, PIN_EXTERNAL_SENSOR
 
 ROOMS = [
 
@@ -23,7 +23,9 @@ ROOMS = [
          lights=[4, 7, 15, 18]),
 
     Room(name='Stairway',
-         lights=[13]),
+         lights=[13],
+         motion_pin=PIN_EXTERNAL_SENSOR,
+         motion_timeout=datetime.timedelta(minutes=5)),
 ]
 
 ROOM_GRAPH = {

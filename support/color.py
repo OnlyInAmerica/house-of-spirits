@@ -91,7 +91,7 @@ CIRCADIAN_COLORS_ASC = [
     SunnyPlusCircadianColor(name='Day',
                             color_xy=[0.396, 0.3859],
                             brightness=0,
-                            trigger_date_function=lambda date: get_time_at_elevation(20, date=date, direction=SUN_RISING)),
+                            trigger_date_function=lambda date: get_time_at_elevation(40, date=date, direction=SUN_RISING)),
 
     CircadianColor(name='Late Afternoon',
                    color_xy=[0.4506, 0.4081],

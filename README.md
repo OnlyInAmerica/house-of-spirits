@@ -2,6 +2,10 @@
 
 A collection of light management programs designed for Raspberry Pi and Hue.
 
+## System Requirements
+
+    bluez
+
 ## Top-Level routines
 
 The following are always-running:
@@ -30,9 +34,11 @@ SSL_KEY_PEM = "/paty/to/your/privkey.pem"
 Note the system timezone is America/LosAngeles.
 
 ```
+# Begin monitoring motion and circadian cycles on boot
 @reboot sh /home/pi/python/motion.sh
 @reboot sh /home/pi/python/circadian.sh
 @reboot sh /home/pi/python/web_server.sh
+@reboot sh /home/pi/python/ble.sh
 
 # Wakeup weekdays 7:30a, weekends 9:30a
 30 7 * * mon-fri /usr/bin/python3 /home/pi/python/wakeup.py

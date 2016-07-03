@@ -2,6 +2,8 @@
 This module manages getting and setting inter-process state
 """
 import json
+from datetime import datetime
+import dateutil.parser
 
 FILENAME = 'state'
 
@@ -36,6 +38,21 @@ def is_party_mode() -> bool:
 
 def set_party_mode(enabled: bool):
     _set_value('party_mode', enabled)
+
+
+def set_room_last_motion_date(room_name: str, motion_date: datetime):
+    _set_value('motion_' + room_name.replace(' ', ''), motion_date.isoformat())
+
+
+def get_room_last_motion_date(room_name: str) -> datetime:
+    date_str = _get_value('motion_' + room_name.replace(' ', ''))
+    if date_str:
+        try:
+            return dateutil.parser.parse(date_str)
+        except:
+            return None
+
+    return None
 
 
 def _get_value(key: str):
