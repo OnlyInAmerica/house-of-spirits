@@ -51,9 +51,3 @@ Note the system timezone is America/LosAngeles.
 ## Sending to Raspberry Pi
 
     rsync -a --exclude-from 'rsync-excludes.txt' ./ pi@lights.home:/home/pi/python/
-
-## Testing webserver
-
-    The webserver has a single API for notifying of your arrival
-
-    curl -H "Content-Type: application/json" -X POST -d '{"token":"TOKEN"}' https://home.dbro.pro/arrive

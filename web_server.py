@@ -6,7 +6,6 @@ import flask
 import re
 
 from SECRETS import HTTPS_API_KEY, SSL_CERT_PEM, SSL_KEY_PEM
-from arrive import unlock
 from gevent import pywsgi
 from settings import ROOMS
 from support import env
@@ -132,36 +131,8 @@ def home():
         flask.abort(404)
 
 
-@app.route("/arrive-local", methods=['POST'])
-def arrive_local():
-    """
-    Like arrive, but dispenses with HTTPS token checking in favor of only allowing
-    local network requests
-    """
-    if is_local_request(flask.request):
-        Popen(["python3", "./arrive.py", "run"])  # async
-        return "arrive"
-    else:
-        logger.info('Arrive-local accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
-        flask.abort(404)
-
-
-@app.route("/arrive", methods=['POST'])
-def arrive():
-    json = flask.request.get_json()
-    token = json.get('token', None)
-    if token == HTTPS_API_KEY:
-        Popen(["python3", "./arrive.py", "run"])  # async
-        return "arrive"
-    else:
-        logger.warn("Request provided invalid token: %s", flask.request.values)
-        flask.abort(403)
-
-
 if __name__ == "__main__":
-    from arrive import PROCESS_NAME as ARRIVE_PROCESS_NAME
 
-    unlock(ARRIVE_PROCESS_NAME)  # Unlock arrival locks from last run
     env.set_party_mode(False)
 
     server = pywsgi.WSGIServer(('0.0.0.0', 5000), app, keyfile=SSL_KEY_PEM, certfile=SSL_CERT_PEM)
