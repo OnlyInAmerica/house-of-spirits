@@ -1,28 +1,13 @@
 """
 This module manages getting and setting inter-process state
 """
-import json
+from tinydb import TinyDB, Query
 from datetime import datetime
+
 import dateutil.parser
 
-FILENAME = 'state'
-
-
-def save_state(state: dict):
-    state_file = open(FILENAME, 'w')
-    state_file.write(json.dumps(state))
-    state_file.close()
-
-
-def get_state() -> dict:
-    try:
-        state_file = open(FILENAME, 'r')
-        state = json.loads(state_file.read())
-        state_file.close()
-        return state
-    except FileNotFoundError:
-        return {}
-
+DB_FILENAME = 'state.db'
+db = None
 
 def is_guest_mode() -> bool:
     return _get_value('guest_mode')
@@ -56,12 +41,29 @@ def get_room_last_motion_date(room_name: str) -> datetime:
 
 
 def _get_value(key: str):
-    state = get_state()
-    value = state.get(key, False)
-    return value
+    db = _connect_db()
+    KeyValue = Query()
+    result = db.get(KeyValue.key == key)
+    print("Get %s . Results %s" % (key, result))
+
+    if result is not None:
+        return result['value']
+    return False
 
 
 def _set_value(key: str, value):
-    state = get_state()
-    state[key] = value
-    save_state(state)
+    print("Set %s -> %s" % (key, value))
+    db = _connect_db()
+    KeyValue = Query()
+    result = db.get(KeyValue.key == key)
+    if result:
+        db.update({'value': value}, KeyValue.key == key)
+    else:
+        db.insert({'key': key, 'value': value})
+
+
+def _connect_db():
+    global db
+    if db is None:
+        db = TinyDB(DB_FILENAME)
+    return db

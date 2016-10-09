@@ -79,3 +79,6 @@ SECRETS.py
 
 # Forecast file
 forecast.json
+
+# Database
+*.db
