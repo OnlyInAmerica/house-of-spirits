@@ -59,9 +59,12 @@ def party():
         # Start party XD
         party_process = Popen(["python3", "./animate_web.py", "run"])  # async
         env.set_party_mode(True)
+        env.set_motion_enabled(False)
+
     elif not enabled and env.is_party_mode():
         # Stop party :(
         env.set_party_mode(False)
+        env.set_motion_enabled(True)
         if party_process is not None:
             party_process.kill()
             party_process = None
