@@ -1,6 +1,7 @@
 import datetime
 
 import copy
+from phue import PhueRequestTimeout
 
 from support import env
 from support.color import adjust_command_for_time, get_current_circadian_color
@@ -92,13 +93,20 @@ class Room:
 
     def update(self, command: dict):
         logger.info("Sending %s to %s", str(command), self.name)
-        result = hue.set_light(self.lights, command)
-        logger.info("Update result %s", str(result))
+        try:
+            result = hue.set_light(self.lights, command)
+            logger.info("Update result %s", str(result))
+        except PhueRequestTimeout:
+            logger.error("Failed to update room '%s'" % self.name)
 
     def is_lit(self):
-        for light in self.lights:
-            if hue.get_light(light, 'on'):
-                return True
+        try:
+            for light in self.lights:
+                if hue.get_light(light, 'on'):
+                    return True
+        except PhueRequestTimeout:
+            logger.error("Failed to query whether room '%s' is lit" % self.name)
+
         return False
 
 
