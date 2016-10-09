@@ -116,6 +116,18 @@ def guest_mode():
         flask.abort(404)
 
 
+@app.route("/motion-mode", methods=['POST'])
+def guest_mode():
+    if is_local_request(flask.request):
+        json = flask.request.get_json()
+        enabled = json.get('enabled', False)
+        env.set_motion_enabled(enabled)
+        return "Motion mode is now %r" % enabled
+    else:
+        logger.info('Motion Mode accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
+        flask.abort(404)
+
+
 @app.route("/home-state", methods=['GET'])
 def home_status():
     if is_local_request(flask.request):
@@ -131,7 +143,9 @@ def home():
         home_status = get_home_status(template_friendly_dict=True)  # Template engine requires string values
         guest_mode = 'true' if env.is_guest_mode() else 'false'
         party_mode = 'true' if env.is_party_mode() else 'false'
-        return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode, party_mode=party_mode)
+        motion_mode = 'true' if env.is_motion_enabled() else 'false'
+
+        return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode, party_mode=party_mode, motion_Mode=motion_mode)
     else:
         logger.info('Home accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)

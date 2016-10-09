@@ -25,6 +25,11 @@
 
 <script>
 
+    //  Label Color
+    var ENABLED_LABEL_COLOR = "#828282";
+    var DISABLED_LABEL_COLOR = "#bcbcbc";
+
+    // Room Colors
     var DARK_COLOR = "#3e3e3e";
     var LIGHT_COLOR = "#ffa955";
 
@@ -46,8 +51,12 @@
 //    };
         var initialGuestMode = $.parseJSON("{{guest_mode}}");
         var initialPartyMode = $.parseJSON("{{party_mode}}");
+        var initialMotionMode = $.parseJSON("{{motion_mode}}");
+//
 //     For testing html without template rendering
 //    var initialGuestMode = true;
+//    var initialPartyMode = false;
+//    var initialMotiontMode = true;
 
     /* Local Testing */
 
@@ -117,18 +126,27 @@
             STAIRWAY_HEIGHT
     );
 
-    var guestMode = two.makeText('Guest Mode ' + (initialGuestMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 34, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+    var labelHorizOffset = 95;
+
+    var guestMode = two.makeText('Guest', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
         size: 12,
         leading: 0,
-        fill: '#828282'
+        fill: initialGuestMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
     });
 
-    var partyMode = two.makeText('Party Mode ' + (initialPartyMode ? 'Enabled' : 'Disabled'), ((WIDTH - LIVING_ROOM_WIDTH) * .5) + 30, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 50, {
+    var partyMode = two.makeText('Party', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 40, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
         size: 12,
         leading: 0,
-        fill: '#828282'
+        fill: initialPartyMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
+    });
+
+    var motionMode = two.makeText('Motion', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 80, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+        family: 'sans-serif',
+        size: 12,
+        leading: 0,
+        fill: initialMotiontMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
     });
 
     updateUiWithHomeState(initialHomeState);
@@ -171,6 +189,13 @@
                 var isOn = handleRoomClick('Stairway');
                 stairWay.fill = getColorForOnState(isOn);
                 two.update();
+            });
+
+    $(motionMode._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isMotionMode = !initialMotionMode;
+                setMotionMode(isMotionMode);
             });
 
     $(guestMode._renderer.elem)
@@ -232,6 +257,24 @@
         //}
     }
 
+        function setMotionMode(enabled) {
+        $.ajax({
+            type: "POST",
+            url: "/motion-mode",
+            data: JSON.stringify({'enabled': enabled}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "text",
+            success: function (data) {
+                initialGuestMode = enabled;
+                motionMode.fill = enabled ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
+                two.update();
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
     function setGuestMode(enabled) {
         $.ajax({
             type: "POST",
@@ -241,7 +284,7 @@
             dataType: "text",
             success: function (data) {
                 initialGuestMode = enabled;
-                guestMode.value = 'Guest Mode ' + (enabled ? 'Enabled' : 'Disabled');
+                guestMode.fill = enabled ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
                 two.update();
             },
             failure: function (errMsg) {
@@ -259,7 +302,9 @@
             dataType: "text",
             success: function (data) {
                 initialPartyMode = enabled;
-                partyMode.value = 'Party Mode ' + (enabled ? 'Enabled' : 'Disabled');
+                partyMode.fill = enabled ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
+                // Toggling party mode also affects motion mode
+                motionMode.fill = (!enabled) ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
                 two.update();
                 // Make sure party-mode state is propagated before polling
                 setTimeout(updateHomeState, 1000);
