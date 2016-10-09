@@ -100,7 +100,7 @@ def lights():
                     room.switch(on_state)
         return "Light commands sent."
     else:
-        logger.info('Guest Mode accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
+        logger.info('Lights accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)
 
 
