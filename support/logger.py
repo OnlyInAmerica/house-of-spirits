@@ -3,6 +3,7 @@ import logging.handlers
 from datetime import datetime
 
 import pytz
+import sys
 
 DATE_FORMAT = '%Y/%m/%d %I:%M:%S %p'
 
@@ -30,9 +31,21 @@ def get_logger(name: str):
     logger.addHandler(console)
     logger.addHandler(file)
 
+    # Setup uncaught exception logging
+    catch_excep = lambda typ, value, traceback: _handle_exception(logger, typ, value, traceback)
+    sys.excepthook = catch_excep
+
     return logger
 
 
 def converter(timestamp):
     local_time = datetime.fromtimestamp(timestamp, tz=pytz.timezone('America/Los_Angeles'))
     return local_time.timetuple()
+
+
+def _handle_exception(logger, exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
