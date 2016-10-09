@@ -145,7 +145,11 @@ def home():
         party_mode = 'true' if env.is_party_mode() else 'false'
         motion_mode = 'true' if env.is_motion_enabled() else 'false'
 
-        return flask.render_template('home.html', home_status=home_status, guest_mode=guest_mode, party_mode=party_mode, motion_Mode=motion_mode)
+        return flask.render_template('home.html',
+                                     home_status=home_status,
+                                     guest_mode=guest_mode,
+                                     party_mode=party_mode,
+                                     motion_mode=motion_mode)
     else:
         logger.info('Home accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)
