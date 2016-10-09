@@ -4,6 +4,7 @@ import time
 import RPi.GPIO as GPIO
 import settings
 
+from support.env import set_motion_enabled, is_motion_enabled
 from support.logger import get_logger
 from support.room import PIN_NO_PIN, PIN_EXTERNAL_SENSOR, Room
 from support.time_utils import get_local_time
@@ -61,6 +62,11 @@ def on_motion(triggered_pin: int):
     room = PIN_TO_ROOM[triggered_pin]
     logger.info("Motion %s in %s" %
                 (("started" if is_motion_start else "stopped"), room.name))
+
+    # Ignore event if motion disabled
+    if not is_motion_enabled():
+        logger.info("Motion disabled. Ignoring event")
+        return
 
     # Ignore repeat motion stop events
     if not is_motion_start and not room.motion_started:
@@ -125,9 +131,13 @@ try:
     min_motion_timeout = min_motion_timeout_room.motion_timeout
     logger.info("Min motion timeout %s", str(min_motion_timeout))
 
+    # When the motion process starts, set motion enabled
+    set_motion_enabled(True)
+
     while 1:
         time.sleep(float(min_motion_timeout.seconds) / 2)
-        disable_inactive_lights()
+        if is_motion_enabled():
+            disable_inactive_lights()
 
 
 except KeyboardInterrupt:

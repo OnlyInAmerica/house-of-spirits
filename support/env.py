@@ -9,12 +9,35 @@ import dateutil.parser
 DB_FILENAME = 'state.db'
 db = None
 
+
+'''
+    Motion Sensing Mode
+'''
+
+
+def is_motion_enabled() -> bool:
+    return _get_value('motion_mode')
+
+
+def set_motion_enabled(enabled: bool):
+    _set_value('motion_mode', enabled)
+
+
+'''
+    Guest Mode
+'''
+
+
 def is_guest_mode() -> bool:
     return _get_value('guest_mode')
 
 
 def set_guest_mode(enabled: bool):
     _set_value('guest_mode', enabled)
+
+'''
+    Party Mode
+'''
 
 
 def is_party_mode() -> bool:
@@ -23,6 +46,11 @@ def is_party_mode() -> bool:
 
 def set_party_mode(enabled: bool):
     _set_value('party_mode', enabled)
+
+
+'''
+    Last Room Motion
+'''
 
 
 def set_room_last_motion_date(room_name: str, motion_date: datetime):
