@@ -7,7 +7,7 @@ ROOMS = [
     GuestModeRoom(name='Living Room',
                   lights=[1, 2, 3],
                   motion_pin=17,
-                  motion_timeout=datetime.timedelta(minutes=20)),
+                  motion_timeout=datetime.timedelta(minutes=15)),
 
     Room(name='Hallway',
          lights=[14],
@@ -20,7 +20,7 @@ ROOMS = [
                           motion_timeout=datetime.timedelta(minutes=5)),
 
     Room(name='Bedroom',
-         lights=[4, 7, 15, 18]),
+         lights=[15, 20, 21, 22]),
 
     Room(name='Stairway',
          lights=[13],
@@ -28,7 +28,9 @@ ROOMS = [
          motion_timeout=datetime.timedelta(minutes=5)),
 ]
 
+# Room -> Exit Neighbors. All rooms below must have motion detection. All rooms
+# must have no other exits
 ROOM_GRAPH = {
     'Living Room': ['Hallway'],
-    'Kitchen': ['Hallway']
+    'Kitchen': ['Hallway'],
 }
