@@ -117,7 +117,7 @@ def guest_mode():
 
 
 @app.route("/motion-mode", methods=['POST'])
-def guest_mode():
+def motion_mode():
     if is_local_request(flask.request):
         json = flask.request.get_json()
         enabled = json.get('enabled', False)
