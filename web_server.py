@@ -48,6 +48,9 @@ def get_home_status(template_friendly_dict: bool) -> dict:
 
 @app.route("/party-mode", methods=['POST'])
 def party():
+    if not is_local_request(flask.request):
+        flask.abort(404)
+
     global party_process
     json = flask.request.get_json()
     enabled = json.get('enabled', False)
