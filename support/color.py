@@ -173,3 +173,9 @@ def adjust_command_for_time(command: dict) -> dict:
     circadian_color.apply_to_command(command)
 
     return command
+
+# On startup, print out all circadian event times
+logger.info("Circadian Schedule:")
+now = datetime.datetime.now(LOCAL_TIMEZONE)
+for event in CIRCADIAN_COLORS_ASC:
+    logger.info("%s time %s" % (event.name, event.trigger_date_function(now)))
