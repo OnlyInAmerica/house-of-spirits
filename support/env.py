@@ -9,6 +9,21 @@ import dateutil.parser
 DB_FILENAME = 'state.db'
 db = None
 
+'''
+    Weather
+'''
+
+
+def get_cloud_cover() -> float:
+    coverage = _get_value('cloud_cover')
+    if not coverage:
+        coverage = 0
+    return coverage
+
+
+def set_cloud_cover(coverage: float):
+    _set_value('cloud_cover', coverage)
+
 
 '''
     Motion Sensing Mode
