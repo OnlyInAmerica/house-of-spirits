@@ -126,7 +126,7 @@
             STAIRWAY_HEIGHT
     );
 
-    var labelHorizOffset = 95;
+    var labelHorizOffset = 85;
 
     var guestMode = two.makeText('Guest', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
@@ -135,14 +135,14 @@
         fill: initialGuestMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
     });
 
-    var partyMode = two.makeText('Party', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 40, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+    var partyMode = two.makeText('Party', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 50, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
         size: 12,
         leading: 0,
         fill: initialPartyMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
     });
 
-    var motionMode = two.makeText('Motion', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 80, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+    var motionMode = two.makeText('Motion', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 100, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
         size: 12,
         leading: 0,
@@ -265,7 +265,7 @@
             contentType: "application/json; charset=utf-8",
             dataType: "text",
             success: function (data) {
-                initialGuestMode = enabled;
+                initialMotionMode = enabled;
                 motionMode.fill = enabled ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
                 two.update();
             },
