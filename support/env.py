@@ -1,6 +1,8 @@
 """
 This module manages getting and setting inter-process state
 """
+from typing import Any
+
 from tinydb import TinyDB, Query
 from datetime import datetime
 
@@ -95,26 +97,51 @@ def get_room_occupied(room_name: str) -> bool:
     return _get_value('occupied_' + room_name.replace(' ', ''))
 
 
-def _get_value(key: str):
+KEY_TO_EID_MAP = {}
+
+
+def _get_value(key: str) -> Any:
+    """
+    :return: a EID, Value pair, or False if no record found
+    """
     db = _connect_db()
+
+    if key in KEY_TO_EID_MAP:
+        return _get_value_by_eid(KEY_TO_EID_MAP[key])
+
     KeyValue = Query()
     result = db.get(KeyValue.key == key)
     print("Get %s . Results %s" % (key, result))
 
     if result is not None:
+        KEY_TO_EID_MAP[key] = result.eid
         return result['value']
     return False
+
+
+def _get_value_by_eid(eid: int) -> Any:
+    db = _connect_db()
+    return db.get(eid=eid)
 
 
 def _set_value(key: str, value):
     print("Set %s -> %s" % (key, value))
     db = _connect_db()
+
+    if key in KEY_TO_EID_MAP:
+        _set_value_by_eid(KEY_TO_EID_MAP[key], value)
+        return
+
     KeyValue = Query()
     result = db.get(KeyValue.key == key)
     if result:
         db.update({'value': value}, KeyValue.key == key)
     else:
         db.insert({'key': key, 'value': value})
+
+
+def _set_value_by_eid(eid: int, value):
+    db.update({'value': value}, eids=[eid])
 
 
 def _connect_db():
