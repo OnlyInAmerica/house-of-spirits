@@ -34,6 +34,9 @@ class Room:
         self.motion_started = False
         self.last_motion = None
 
+    def __repr__(self):
+        return self.name
+
     def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
 
         # Ignore motion events in party mode

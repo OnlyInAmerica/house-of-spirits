@@ -67,6 +67,18 @@ def get_room_last_motion_date(room_name: str) -> datetime:
 
     return None
 
+'''
+    Room occupancy
+'''
+
+
+def set_room_occupied(room_name: str, enabled: bool):
+    _set_value('occupied_' + room_name.replace(' ', ''), enabled)
+
+
+def get_room_occupied(room_name: str) -> bool:
+    return _get_value('occupied_' + room_name.replace(' ', ''))
+
 
 def _get_value(key: str):
     db = _connect_db()

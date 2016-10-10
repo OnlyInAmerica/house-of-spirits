@@ -4,7 +4,7 @@ import time
 import RPi.GPIO as GPIO
 import settings
 
-from support.env import set_motion_enabled, is_motion_enabled
+from support.env import set_motion_enabled, is_motion_enabled, set_room_occupied, get_room_occupied
 from support.logger import get_logger
 from support.room import PIN_NO_PIN, PIN_EXTERNAL_SENSOR, Room
 from support.time_utils import get_local_time
@@ -22,9 +22,8 @@ ROOM_NAME_TO_IDX = {}
 # Neighbors to notify
 EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES = {}
 
-# TODO : Need to share collection of occupied rooms so circadian can effect them...
-OCCUPIED_ROOMS = []  # Rooms with motion and no exit events
-EXITED_ROOMS = []  # Rooms where an exit event occurred
+OCCUPIED_ROOMS = set([])  # Rooms with motion and no exit events
+EXITED_ROOMS = set([])  # Rooms where an exit event occurred
 
 for idx, room in enumerate(settings.ROOMS):
     ROOM_NAME_TO_IDX[room.name] = idx
@@ -76,9 +75,9 @@ def on_motion(triggered_pin: int):
 
     if is_motion_start:
         logger.info("Mark %s occupied / not exited" % room.name)
-        OCCUPIED_ROOMS.append(room)
-        if room in EXITED_ROOMS:
-            EXITED_ROOMS.remove(room)
+        OCCUPIED_ROOMS.add(room)
+        EXITED_ROOMS.discard(room)
+        set_room_occupied(room.name, True)
 
         exit_src_rooms = EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES.get(room.name, None)
         logger.info("%s has exit sources %s" % (room.name, exit_src_rooms))
@@ -89,9 +88,10 @@ def on_motion(triggered_pin: int):
                 exit_src_room = settings.ROOMS[ROOM_NAME_TO_IDX[exit_src_room_name]]
                 if corroborates_exit(exit_dst_room, exit_src_room):
                     logger.info("Mark %s is not-occupied / exited" % exit_src_room.name)
-                    EXITED_ROOMS.append(exit_src_room)
-                    if exit_src_room in OCCUPIED_ROOMS:
-                        OCCUPIED_ROOMS.remove(exit_src_room)
+                    EXITED_ROOMS.add(exit_src_room)
+                    OCCUPIED_ROOMS.discard(exit_src_room)
+                    set_room_occupied(room.name, False)
+        logger.info("Occupied rooms %s" % OCCUPIED_ROOMS)
 
 
 def disable_inactive_lights():
@@ -118,6 +118,9 @@ def disable_inactive_lights():
             logger.info("Inactive Room %s has no exit dst neighbors. Power off" % room.name)
 
         room.switch(on=False)
+
+        # Never consider a powered-off room as occupied
+        OCCUPIED_ROOMS.discard(room)
 
 try:
     # RPi GPIO

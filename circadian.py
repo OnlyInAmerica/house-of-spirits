@@ -1,6 +1,9 @@
 import time
 
+import copy
+
 from support.color import get_next_circadian_color
+from support.env import get_room_occupied
 from support.hue import command_all_lights, hue
 from support.logger import get_logger
 from support.room import LightsOnDuringDayRoom
@@ -26,5 +29,17 @@ while 1:
             if not isinstance(room, LightsOnDuringDayRoom):
                 lights += room.lights
         hue.set_light(lights, command)
+    elif next_color.name == 'Late Afternoon':
+        # This transitions the lights from off to on, so we should turn on rooms
+        # that are occupied (in addition to applying the circadian hue)
+        on_plus_command = copy.deepcopy(command)
+        on_plus_command['on'] = True
+
+        for room in ROOMS:
+            if get_room_occupied(room.name):
+                logger.info("Turning on occupied room %s for Late Afternoon transition" % room.name)
+                room.update(on_plus_command)
+            else:
+                room.update(command)
     else:
         command_all_lights(command)
