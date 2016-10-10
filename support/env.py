@@ -14,68 +14,73 @@ db = None
 '''
     Weather
 '''
+KEY_CLOUD_COVER = 'cloud_cover'
 
 
 def get_cloud_cover() -> float:
-    coverage = _get_value('cloud_cover')
+    coverage = _get_value(KEY_CLOUD_COVER)
     if not coverage:
         coverage = 0
     return coverage
 
 
 def set_cloud_cover(coverage: float):
-    _set_value('cloud_cover', coverage)
+    _set_value(KEY_CLOUD_COVER, coverage)
 
 
 '''
     Motion Sensing Mode
 '''
+KEY_MOTION_MODE = 'motion_mode'
 
 
 def is_motion_enabled() -> bool:
-    return _get_value('motion_mode')
+    return _get_value(KEY_MOTION_MODE)
 
 
 def set_motion_enabled(enabled: bool):
-    _set_value('motion_mode', enabled)
+    _set_value(KEY_MOTION_MODE, enabled)
 
 
 '''
     Guest Mode
 '''
+KEY_GUEST_MODE = 'guest_mode'
 
 
 def is_guest_mode() -> bool:
-    return _get_value('guest_mode')
+    return _get_value(KEY_GUEST_MODE)
 
 
 def set_guest_mode(enabled: bool):
-    _set_value('guest_mode', enabled)
+    _set_value(KEY_GUEST_MODE, enabled)
 
 '''
     Party Mode
 '''
+KEY_PARTY_MODE = 'party_mode'
 
 
 def is_party_mode() -> bool:
-    return _get_value('party_mode')
+    return _get_value(KEY_PARTY_MODE)
 
 
 def set_party_mode(enabled: bool):
-    _set_value('party_mode', enabled)
+    _set_value(KEY_PARTY_MODE, enabled)
 
 
 '''
     Last Room Motion
 '''
+KEY_PREFIX_LAST_ROOM_MOTION = 'motion_'
 
 
 def set_room_last_motion_date(room_name: str, motion_date: datetime):
-    _set_value('motion_' + room_name.replace(' ', ''), motion_date.isoformat())
+    _set_value(KEY_PREFIX_LAST_ROOM_MOTION + room_name.replace(' ', ''), motion_date.isoformat())
 
 
 def get_room_last_motion_date(room_name: str) -> datetime:
-    date_str = _get_value('motion_' + room_name.replace(' ', ''))
+    date_str = _get_value(KEY_PREFIX_LAST_ROOM_MOTION + room_name.replace(' ', ''))
     if date_str:
         try:
             return dateutil.parser.parse(date_str)
@@ -87,14 +92,15 @@ def get_room_last_motion_date(room_name: str) -> datetime:
 '''
     Room occupancy
 '''
+KEY_ROOM_OCCUPANCY = 'occupied_'
 
 
 def set_room_occupied(room_name: str, enabled: bool):
-    _set_value('occupied_' + room_name.replace(' ', ''), enabled)
+    _set_value(KEY_ROOM_OCCUPANCY + room_name.replace(' ', ''), enabled)
 
 
 def get_room_occupied(room_name: str) -> bool:
-    return _get_value('occupied_' + room_name.replace(' ', ''))
+    return _get_value(KEY_ROOM_OCCUPANCY + room_name.replace(' ', ''))
 
 
 KEY_TO_EID_MAP = {}
