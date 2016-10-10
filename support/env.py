@@ -1,12 +1,11 @@
 """
 This module manages getting and setting inter-process state
 """
-from typing import Any
 
-from tinydb import TinyDB, Query
 from datetime import datetime
 
 import dateutil.parser
+from tinydb import TinyDB, Query
 
 DB_FILENAME = 'state.db'
 db = None
@@ -106,7 +105,7 @@ def get_room_occupied(room_name: str) -> bool:
 KEY_TO_EID_MAP = {}
 
 
-def _get_value(key: str) -> Any:
+def _get_value(key: str):
     """
     :return: a EID, Value pair, or False if no record found
     """
@@ -125,9 +124,9 @@ def _get_value(key: str) -> Any:
     return False
 
 
-def _get_value_by_eid(eid: int) -> Any:
+def _get_value_by_eid(eid: int):
     db = _connect_db()
-    return db.get(eid=eid)
+    return db.get(eid=eid)['value']
 
 
 def _set_value(key: str, value):
