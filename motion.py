@@ -121,6 +121,7 @@ def disable_inactive_lights():
 
         # Never consider a powered-off room as occupied
         OCCUPIED_ROOMS.discard(room)
+        set_room_occupied(room.name, False)
 
 try:
     # RPi GPIO
