@@ -9,9 +9,6 @@ from support.logger import get_logger
 
 logger = get_logger('wakeup')
 
-living_room = settings.ROOMS[0]
-hall = settings.ROOMS[1]
-kitchen = settings.ROOMS[2]
 bedroom = settings.ROOMS[3]
 
 command = {'xy': LIGHT_EVENING_XY, 'bri': 1, 'on': True}
@@ -24,3 +21,4 @@ command['xy'] = LIGHT_DAYTIME_XY
 command['transitiontime'] = 10 * 60 * 30
 
 bedroom.update(command)
+logger.info("Performed wakeup")
