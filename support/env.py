@@ -5,8 +5,10 @@ This module manages getting and setting inter-process state
 from datetime import datetime
 
 import dateutil.parser
-from tinydb import TinyDB, Query
+import os
+import sqlite3
 
+DB_FOLDER = './'
 DB_FILENAME = 'state.db'
 db = None
 
@@ -102,55 +104,78 @@ def get_room_occupied(room_name: str) -> bool:
     return _get_value(KEY_ROOM_OCCUPANCY + room_name.replace(' ', ''))
 
 
-KEY_TO_EID_MAP = {}
-
-
 def _get_value(key: str):
     """
     :return: a EID, Value pair, or False if no record found
     """
-    db = _connect_db()
+    db = _db_connect()
 
-    if key in KEY_TO_EID_MAP:
-        return _get_value_by_eid(KEY_TO_EID_MAP[key])
+    value = db.execute("select value from key_value where key=?", (key,)).fetchone()
 
-    KeyValue = Query()
-    result = db.get(KeyValue.key == key)
-    print("Get %s . Results %s" % (key, result))
-
-    if result is not None:
-        KEY_TO_EID_MAP[key] = result.eid
-        return result['value']
+    if value is not None and value[0] is not None:
+        print("Get %s . Results %s" % (key, value))
+        return value[0]
     return False
-
-
-def _get_value_by_eid(eid: int):
-    db = _connect_db()
-    return db.get(eid=eid)['value']
 
 
 def _set_value(key: str, value):
     print("Set %s -> %s" % (key, value))
-    db = _connect_db()
+    db = _db_connect()
 
-    if key in KEY_TO_EID_MAP:
-        _set_value_by_eid(KEY_TO_EID_MAP[key], value)
-        return
-
-    KeyValue = Query()
-    result = db.get(KeyValue.key == key)
-    if result:
-        db.update({'value': value}, KeyValue.key == key)
+    if _get_value(key):
+        db.execute("update key_value set value=? where key=?", (value, key))
     else:
-        db.insert({'key': key, 'value': value})
+        db.execute("insert into key_value (key, value) values(?, ?)", (value, key))
 
 
-def _set_value_by_eid(eid: int, value):
-    db.update({'value': value}, eids=[eid])
+def _get_schema_version(db):
+    # user_version is per database value, its used here
+    # to store the version of the schema
+    return db.execute(r"PRAGMA user_version").fetchone()[0]
 
 
-def _connect_db():
-    global db
-    if db is None:
-        db = TinyDB(DB_FILENAME)
-    return db
+def _create_schema(start_fresh=False):
+    try:
+        if start_fresh:
+            db_path = os.path.join(DB_FOLDER, DB_FILENAME)
+            if os.path.exists(db_path):
+                # Preserve one backup, for evidence!
+                os.rename(db_path, db_path + ".old")
+
+        with _db_connect() as db:
+            # fall through each block updating the user_version each time
+            # so that schema changes can be correctly applied
+            version = _get_schema_version(db)
+            if version == 0:
+                db.execute(r"create table room_status ("
+                           r"id integer primary key AUTOINCREMENT,"
+                           r"name text NOT NULL,"
+                           r"occupied int DEFAULT 0,"
+                           r"last_motion_date text"
+                           r")")
+                db.execute(r"create table key_value ("
+                           r"id integer primary key AUTOINCREMENT,"
+                           r"key text NOT NULL,"
+                           r"value text"
+                           r")")
+                db.execute(r"PRAGMA user_version=1")
+    except:
+        #logger.exception("Failed in creating database schema while {}starting fresh".format("" if start_fresh else "not "))
+        if not start_fresh:
+            return _create_schema(start_fresh=True)
+        return False
+    return True
+
+
+def _db_connect():
+    if not os.path.exists(DB_FOLDER):
+        os.makedirs(DB_FOLDER)
+
+    db_path = os.path.join(DB_FOLDER, DB_FILENAME)
+    conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Create the database on startup
+_create_schema()
+print("Create schema!")
