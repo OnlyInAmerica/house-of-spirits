@@ -74,20 +74,18 @@ def on_motion(triggered_pin: int):
     room.on_motion(now, is_motion_start=is_motion_start)
 
     if is_motion_start:
-        logger.info("Mark %s occupied / not exited" % room.name)
         OCCUPIED_ROOMS.add(room)
         EXITED_ROOMS.discard(room)
         set_room_occupied(room.name, True)
 
         exit_src_rooms = EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES.get(room.name, None)
-        logger.info("%s has exit sources %s" % (room.name, exit_src_rooms))
         if is_motion_start and exit_src_rooms is not None:
             exit_dst_room = room
-            logger.info("Notifying %s of exit motion via %s" % (exit_src_rooms, exit_dst_room.name))
+            # logger.info("Notifying %s of possible exit to %s" % (exit_src_rooms, exit_dst_room.name))
             for exit_src_room_name in exit_src_rooms:
                 exit_src_room = settings.ROOMS[ROOM_NAME_TO_IDX[exit_src_room_name]]
                 if corroborates_exit(exit_dst_room, exit_src_room):
-                    logger.info("Mark %s is not-occupied / exited" % exit_src_room.name)
+                    logger.info("%s motion corroborates exit from %s" % (exit_dst_room, exit_src_room))
                     EXITED_ROOMS.add(exit_src_room)
                     OCCUPIED_ROOMS.discard(exit_src_room)
                     set_room_occupied(room.name, False)
@@ -122,6 +120,8 @@ def disable_inactive_lights():
         # Never consider a powered-off room as occupied
         OCCUPIED_ROOMS.discard(room)
         set_room_occupied(room.name, False)
+    logger.info("end disable_inactive_lights. Occupied rooms %s" % OCCUPIED_ROOMS)
+
 
 try:
     # RPi GPIO
