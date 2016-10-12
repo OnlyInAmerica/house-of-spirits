@@ -22,7 +22,7 @@ def get_cloud_cover() -> float:
     coverage = _get_value(KEY_CLOUD_COVER)
     if coverage is None:
         coverage = 0
-    return coverage
+    return float(coverage)
 
 
 def set_cloud_cover(coverage: float):
