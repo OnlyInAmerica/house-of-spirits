@@ -20,7 +20,7 @@ KEY_CLOUD_COVER = 'cloud_cover'
 
 def get_cloud_cover() -> float:
     coverage = _get_value(KEY_CLOUD_COVER)
-    if not coverage:
+    if coverage is None:
         coverage = 0
     return coverage
 
@@ -36,11 +36,11 @@ KEY_MOTION_MODE = 'motion_mode'
 
 
 def is_motion_enabled() -> bool:
-    return _get_value(KEY_MOTION_MODE)
+    return _get_bool_value(KEY_MOTION_MODE)
 
 
 def set_motion_enabled(enabled: bool):
-    _set_value(KEY_MOTION_MODE, enabled)
+    _set_bool_value(KEY_MOTION_MODE, enabled)
 
 
 '''
@@ -50,11 +50,11 @@ KEY_GUEST_MODE = 'guest_mode'
 
 
 def is_guest_mode() -> bool:
-    return _get_value(KEY_GUEST_MODE)
+    return _get_bool_value(KEY_GUEST_MODE)
 
 
 def set_guest_mode(enabled: bool):
-    _set_value(KEY_GUEST_MODE, enabled)
+    _set_bool_value(KEY_GUEST_MODE, enabled)
 
 '''
     Party Mode
@@ -63,11 +63,11 @@ KEY_PARTY_MODE = 'party_mode'
 
 
 def is_party_mode() -> bool:
-    return _get_value(KEY_PARTY_MODE)
+    return _get_bool_value(KEY_PARTY_MODE)
 
 
 def set_party_mode(enabled: bool):
-    _set_value(KEY_PARTY_MODE, enabled)
+    _set_bool_value(KEY_PARTY_MODE, enabled)
 
 
 '''
@@ -79,14 +79,36 @@ KEY_PREFIX_LAST_ROOM_MOTION = 'motion_'
 def set_room_last_motion_date(room_name: str, motion_date: datetime):
     _set_value(KEY_PREFIX_LAST_ROOM_MOTION + room_name.replace(' ', ''), motion_date.isoformat())
 
+    last_motion_date_val = motion_date.isoformat()
+
+    db = _db_connect()
+
+    existing_room = db.execute("select id, last_motion_date from room_status where name=?", (room_name,)).fetchone()
+
+    if existing_room is not None and existing_room[0] is not None:
+        existing_id = existing_room[0]
+        last_last_motion_date = existing_room[1]
+        print("Update room '%s' last motion from '%s' to '%s'" % (room_name, last_last_motion_date, last_motion_date_val))
+        db.execute("update room_status set last_motion_date=? where id=?", (last_motion_date_val, existing_id))
+    else:
+        print("Insert new room with last motion date %s" % last_motion_date_val)
+        db.execute("insert into room_status (name, last_motion_date) values(?, ?)", (room_name, last_motion_date_val))
+    db.commit()
+
 
 def get_room_last_motion_date(room_name: str) -> datetime:
-    date_str = _get_value(KEY_PREFIX_LAST_ROOM_MOTION + room_name.replace(' ', ''))
-    if date_str:
+
+    db = _db_connect()
+
+    print("Checking room '%s' last motion" % room_name)
+    last_motion = db.execute("select last_motion_date from room_status where name=?", (room_name,)).fetchone()
+
+    if last_motion is not None and last_motion[0] is not None:
+        print("Room '%s' last motion '%s'" % (room_name, last_motion[0]))
         try:
-            return dateutil.parser.parse(date_str)
+            return dateutil.parser.parse(last_motion[0])
         except:
-            return None
+            pass
 
     return None
 
@@ -96,36 +118,76 @@ def get_room_last_motion_date(room_name: str) -> datetime:
 KEY_ROOM_OCCUPANCY = 'occupied_'
 
 
-def set_room_occupied(room_name: str, enabled: bool):
-    _set_value(KEY_ROOM_OCCUPANCY + room_name.replace(' ', ''), enabled)
+def set_room_occupied(room_name: str, occupied: bool):
+
+    occupied_val = 1 if occupied else 0
+
+    db = _db_connect()
+
+    existing_room = db.execute("select id, occupied from room_status where name=?", (room_name,)).fetchone()
+
+    if existing_room is not None and existing_room[0] is not None:
+        existing_id = existing_room[0]
+        was_occupied = existing_room[1]
+        print("Update room '%s' occupied from '%s' to '%s'" % (room_name, was_occupied, occupied_val))
+        db.execute("update room_status set occupied=? where id=?", (occupied_val, existing_id))
+    else:
+        print("Insert new room with occupied %s" % occupied_val)
+        db.execute("insert into room_status (name, occupied) values(?, ?)", (room_name, occupied_val))
+    db.commit()
 
 
 def get_room_occupied(room_name: str) -> bool:
-    return _get_value(KEY_ROOM_OCCUPANCY + room_name.replace(' ', ''))
+    db = _db_connect()
+
+    print("Checking room '%s' occupied" % room_name)
+    occupied = db.execute("select occupied from room_status where name=?", (room_name,)).fetchone()
+
+    if occupied is not None and occupied[0] is not None:
+        print("Room '%s' occupied '%s'" % (room_name, occupied[0]))
+        return True if occupied[0] == 1 else False
+    return False
+
+
+'''
+    Private API
+'''
+
+
+def _get_bool_value(key: str) -> bool:
+    value = _get_value(key)
+    print("Bool key '%s' has value '%s'" % (key, not (value is None or value == '0')))
+    if value is None or value == '0':
+        return False
+    return True
 
 
 def _get_value(key: str):
-    """
-    :return: a EID, Value pair, or False if no record found
-    """
     db = _db_connect()
 
     value = db.execute("select value from key_value where key=?", (key,)).fetchone()
 
     if value is not None and value[0] is not None:
-        print("Get %s . Results %s" % (key, value))
+        print("Get %s . Result '%s'" % (key, value[0]))
         return value[0]
-    return False
+    return None
+
+
+def _set_bool_value(key: str, value: bool):
+    _set_value(key, '1' if value else '0')
 
 
 def _set_value(key: str, value):
-    print("Set %s -> %s" % (key, value))
     db = _db_connect()
 
-    if _get_value(key):
+    existing_value = _get_value(key)
+    if existing_value is not None:
+        print("Update key '%s' value from '%s' to '%s'" % (key, existing_value, value))
         db.execute("update key_value set value=? where key=?", (value, key))
     else:
-        db.execute("insert into key_value (key, value) values(?, ?)", (value, key))
+        print("Insert %s -> %s" % (key, value))
+        db.execute("insert into key_value (key, value) values(?, ?)", (key, value))
+    db.commit()
 
 
 def _get_schema_version(db):
