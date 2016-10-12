@@ -50,7 +50,7 @@ def corroborates_exit(exit_dst_room: Room, exit_src_room: Room):
     # within a very short period of the exit_dst_room
     return exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None \
            and (exit_src_room.motion_started or
-                exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=5))
+                exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=10))
 
 
 def on_motion(triggered_pin: int):
