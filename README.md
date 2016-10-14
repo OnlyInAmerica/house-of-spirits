@@ -48,6 +48,29 @@ Note the system timezone is America/LosAngeles.
 * 5 * * * sh /home/pi/python/weather.sh
 ```
 
+## Systemd configuration
+
+For automatic restart on crash, replace the `@reboot` lines in the crontab above with a
+systemd service definition. For each line, replace with a systemd service file in `/etc/systemd/system/` as below:
+
+```
+[Unit]
+Description=Motion Service
+After=network.target
+
+[Service]
+ExecStart=/home/pi/python/motion.sh
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+After saving the file, enable it with `systemctl`:
+
+    sudo systemctl enable motion.service
+
 ## Sending to Raspberry Pi
 
     rsync -a --exclude-from 'rsync-excludes.txt' ./ pi@lights.home:/home/pi/python/
