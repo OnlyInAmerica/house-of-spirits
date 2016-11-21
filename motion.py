@@ -48,9 +48,23 @@ logger.info("Prepped exit map %s", EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES)
 def corroborates_exit(exit_dst_room: Room, exit_src_room: Room):
     # Is the exit src room still in motion (start but no stop event) or has exit src room motion ended
     # within a very short period of the exit_dst_room
-    return exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None \
+    result = exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None \
            and (exit_src_room.motion_started or
                 exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=10))
+
+    if not result:
+        reason = ""
+        if not (exit_src_room.last_motion is not None):
+            reason += "%s has no last motion. " % exit_src_room
+        if not (exit_dst_room.last_motion is not None):
+            reason += "%s has no last motion. " % exit_dst_room
+        if not (exit_src_room.motion_started):
+            reason += "%s motion has not started. " % exit_src_room
+        if (exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None) and not (exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=10)):
+            reason += "Difference between dst (%s) and src (%s) motion is only %s" % (exit_dst_room.name, exit_src_room.name, exit_dst_room.last_motion - exit_src_room.last_motion)
+        logger.info("Motion from %s does not corroborate exit from %s because %s" % (exit_dst_room, exit_src_room, reason))
+
+    return result
 
 
 def on_motion(triggered_pin: int):
@@ -140,6 +154,7 @@ try:
 
     while 1:
         time.sleep(float(min_motion_timeout.seconds) / 2)
+        # time.sleep(5)
         if is_motion_enabled():
             disable_inactive_lights()
 
