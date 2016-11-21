@@ -14,7 +14,7 @@ def get_logger(name: str):
     logger.setLevel(logging.INFO)
 
     file = logging.handlers.RotatingFileHandler(
-              '/var/log/home/' + name + '.log', maxBytes=1 * 1024 * 1024, backupCount=3)
+              '/var/log/home/' + name + '.log', maxBytes=512 * 1024, backupCount=1)
     file.setLevel(logging.INFO)
     file_formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                                        datefmt=DATE_FORMAT)
