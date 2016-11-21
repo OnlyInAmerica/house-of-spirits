@@ -62,6 +62,8 @@ After=network.target
 ExecStart=/home/pi/python/motion.sh
 Type=simple
 Restart=always
+User=pi
+Group=pi
 
 [Install]
 WantedBy=multi-user.target

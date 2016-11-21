@@ -28,7 +28,7 @@ def is_local_request(request):
 
 def get_home_status(template_friendly_dict: bool) -> dict:
     """
-    :param template_friendly_dict: whether to create a template friendly cict. This involves representing booleans
+    :param template_friendly_dict: whether to create a template friendly dict. This involves representing booleans
     as "true"/"false" strings and stripping spaces from keys. For template dicts,
     we need to use string values, for json return we can use bool
     """

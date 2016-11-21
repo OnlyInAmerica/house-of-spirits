@@ -66,6 +66,8 @@ class Room:
         since_motion = as_of_date - self.last_motion
         timed_out = since_motion > self.motion_timeout
 
+        logger.info("Room %s last_motion %s (delta %s) is timed out %r" % (self.name, self.last_motion, since_motion, timed_out))
+
         return timed_out
 
     def switch(self, on: bool, adjust_hue_for_time: bool=True, extra_command: dict = None):
