@@ -3,12 +3,12 @@ This module manages getting and setting inter-process state
 """
 
 from datetime import datetime
-
+from settings import ENV_DB_DIR
 import dateutil.parser
 import os
 import sqlite3
 
-DB_FOLDER = './'
+DB_FOLDER = ENV_DB_DIR
 DB_FILENAME = 'state.db'
 db = None
 
@@ -73,11 +73,9 @@ def set_party_mode(enabled: bool):
 '''
     Last Room Motion
 '''
-KEY_PREFIX_LAST_ROOM_MOTION = 'motion_'
 
 
 def set_room_last_motion_date(room_name: str, motion_date: datetime):
-    _set_value(KEY_PREFIX_LAST_ROOM_MOTION + room_name.replace(' ', ''), motion_date.isoformat())
 
     last_motion_date_val = motion_date.isoformat()
 
@@ -88,7 +86,7 @@ def set_room_last_motion_date(room_name: str, motion_date: datetime):
     if existing_room is not None and existing_room[0] is not None:
         existing_id = existing_room[0]
         last_last_motion_date = existing_room[1]
-        print("Update room '%s' last motion from '%s' to '%s'" % (room_name, last_last_motion_date, last_motion_date_val))
+        print("Update room '%s' id %d last motion from '%s' to '%s'" % (room_name, existing_id, last_last_motion_date, last_motion_date_val))
         db.execute("update room_status set last_motion_date=? where id=?", (last_motion_date_val, existing_id))
     else:
         print("Insert new room with last motion date %s" % last_motion_date_val)
@@ -115,7 +113,6 @@ def get_room_last_motion_date(room_name: str) -> datetime:
 '''
     Room occupancy
 '''
-KEY_ROOM_OCCUPANCY = 'occupied_'
 
 
 def set_room_occupied(room_name: str, occupied: bool):
