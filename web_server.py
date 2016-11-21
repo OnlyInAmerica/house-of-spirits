@@ -128,6 +128,18 @@ def motion_mode():
         flask.abort(404)
 
 
+@app.route("/vacation-mode", methods=['POST'])
+def vacation_mode():
+    if is_local_request(flask.request):
+        json = flask.request.get_json()
+        enabled = json.get('enabled', False)
+        env.set_vacation_mode(enabled)
+        return "Vacation mode is now %r" % enabled
+    else:
+        logger.info('Vacation Mode accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
+        flask.abort(404)
+
+
 @app.route("/home-state", methods=['GET'])
 def home_status():
     if is_local_request(flask.request):
@@ -144,12 +156,14 @@ def home():
         guest_mode = 'true' if env.is_guest_mode() else 'false'
         party_mode = 'true' if env.is_party_mode() else 'false'
         motion_mode = 'true' if env.is_motion_enabled() else 'false'
+        vacation_mode = 'true' if env.is_vacation_mode() else 'false'
 
         return flask.render_template('home.html',
                                      home_status=home_status,
                                      guest_mode=guest_mode,
                                      party_mode=party_mode,
-                                     motion_mode=motion_mode)
+                                     motion_mode=motion_mode,
+                                     vacation_mode=vacation_mode)
     else:
         logger.info('Home accessed by remote address %s', flask.request.environ['REMOTE_ADDR'])
         flask.abort(404)

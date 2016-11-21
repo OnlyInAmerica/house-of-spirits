@@ -52,11 +52,12 @@
         var initialGuestMode = $.parseJSON("{{guest_mode}}");
         var initialPartyMode = $.parseJSON("{{party_mode}}");
         var initialMotionMode = $.parseJSON("{{motion_mode}}");
-//
+        var initialVacationMode = $.parseJSON("{{vacation_mode}}");
 //     For testing html without template rendering
 //    var initialGuestMode = true;
 //    var initialPartyMode = false;
 //    var initialMotionMode = true;
+//    var initialVacationMode = false;
 
     /* Local Testing */
 
@@ -126,7 +127,7 @@
             STAIRWAY_HEIGHT
     );
 
-    var labelHorizOffset = 85;
+    var labelHorizOffset = 55;
 
     var guestMode = two.makeText('Guest', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
         family: 'sans-serif',
@@ -147,6 +148,13 @@
         size: 12,
         leading: 0,
         fill: initialMotionMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
+    });
+
+    var vacationMode = two.makeText('Vacation', ((WIDTH - LIVING_ROOM_WIDTH) * .5) + labelHorizOffset + 160, (BOTTOM_OFFSET + (LIVING_ROOM_HEIGHT * 0.5)) + 20, {
+        family: 'sans-serif',
+        size: 12,
+        leading: 0,
+        fill: initialVacationMode ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR
     });
 
     updateUiWithHomeState(initialHomeState);
@@ -210,6 +218,13 @@
             .click(function (e) {
                 var isPartyMode = !initialPartyMode;
                 setPartyMode(isPartyMode);
+            });
+
+    $(vacationMode._renderer.elem)
+            .css('cursor', 'pointer')
+            .click(function (e) {
+                var isVacationMode = !initialVacationMode;
+                setVacationMode(isVacationMode);
             });
 
     function handleRoomClick(roomName) {
@@ -308,6 +323,24 @@
                 two.update();
                 // Make sure party-mode state is propagated before polling
                 setTimeout(updateHomeState, 1000);
+            },
+            failure: function (errMsg) {
+                alert(errMsg);
+            }
+        });
+    }
+
+    function setVacationMode(enabled) {
+        $.ajax({
+            type: "POST",
+            url: "/vacation-mode",
+            data: JSON.stringify({'enabled': enabled}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "text",
+            success: function (data) {
+                initialVacationMode = enabled;
+                vacationMode.fill = enabled ? ENABLED_LABEL_COLOR : DISABLED_LABEL_COLOR;
+                two.update();
             },
             failure: function (errMsg) {
                 alert(errMsg);

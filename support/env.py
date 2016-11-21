@@ -2,13 +2,13 @@
 This module manages getting and setting inter-process state
 """
 
+import sqlite3
 from datetime import datetime
-from settings import ENV_DB_DIR
+
 import dateutil.parser
 import os
-import sqlite3
 
-DB_FOLDER = ENV_DB_DIR
+DB_FOLDER = '/home/pi/python/'  # TODO: Move to settings
 DB_FILENAME = 'state.db'
 db = None
 
@@ -68,6 +68,19 @@ def is_party_mode() -> bool:
 
 def set_party_mode(enabled: bool):
     _set_bool_value(KEY_PARTY_MODE, enabled)
+
+'''
+    Vacation Mode
+'''
+KEY_VACATION_MODE = 'vacation_mode'
+
+
+def is_vacation_mode() -> bool:
+    return _get_bool_value(KEY_VACATION_MODE)
+
+
+def set_vacation_mode(enabled: bool):
+    _set_bool_value(KEY_VACATION_MODE, enabled)
 
 
 '''

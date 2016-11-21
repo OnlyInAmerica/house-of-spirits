@@ -34,5 +34,3 @@ ROOM_GRAPH = {
     'Living Room': ['Hallway'],
     'Kitchen': ['Hallway'],
 }
-
-ENV_DB_DIR = '/home/pi/python/'
