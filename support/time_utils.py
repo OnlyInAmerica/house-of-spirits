@@ -71,4 +71,13 @@ def get_local_solar_elevation(date: datetime = None):
 
 
 def get_time_at_elevation(elevation_deg: float, date: datetime = None, direction=astral.SUN_SETTING):
-    return astral_city.time_at_elevation(elevation_deg, direction=direction, date=date, local=True)
+
+    while True:
+        try:
+            return astral_city.time_at_elevation(elevation_deg, direction=direction, date=date, local=True)
+        except astral.AstralError:
+            print("Sun does not reach elevation %f, trying another" % elevation_deg)
+            if elevation_deg >= 0:
+                return get_time_at_elevation(elevation_deg-1, date, direction)
+            else:
+                return get_time_at_elevation(elevation_deg+1, date, direction)
