@@ -5,7 +5,7 @@ from support.room import Room, LightsOnDuringDayRoom, GuestModeRoom, PIN_EXTERNA
 ROOMS = [
 
     GuestModeRoom(name='Living Room',
-                  lights=[1, 2, 3],
+                  lights=[1, 2, 3, 27],
                   motion_pin=17,
                   motion_timeout=datetime.timedelta(minutes=15)),
 
