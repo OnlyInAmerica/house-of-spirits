@@ -108,33 +108,35 @@ def on_motion(triggered_pin: int):
 
 def disable_inactive_lights():
     now_date = get_local_time()
-    logger.info("begin disable_inactive_lights")
     motion_rooms = list(PIN_TO_ROOM.values())
     motion_rooms += EXTERNAL_SENSOR_ROOMS
+
+    log_msg = "Disable inactive lights report: "
 
     for room in motion_rooms:
 
         inactive = room.is_motion_timed_out(as_of_date=now_date)
-        logger.info("%s is %s" % (room.name, "inactive" if inactive else "active"))
+        log_msg += "%s is %s. " % (room.name, "inactive" if inactive else "active")
 
         if not inactive:
             continue
 
         if inactive and room.name in settings.ROOM_GRAPH:
             if room in EXITED_ROOMS:
-                logger.info("Inactive Room %s has an exit event. Power off." % room.name)
+                log_msg += "Inactive Room %s has an exit event. Power off. " % room.name
             else:
-                logger.info("Inactive Room %s has no exit event. Keep on" % room.name)
+                log_msg += "Inactive Room %s has no exit event. Keep on. " % room.name
                 continue
         else:
-            logger.info("Inactive Room %s has no exit dst neighbors. Power off" % room.name)
+            log_msg += "Inactive Room %s has no exit dst neighbors. Power off. " % room.name
 
         room.switch(on=False)
 
         # Never consider a powered-off room as occupied
         OCCUPIED_ROOMS.discard(room)
         set_room_occupied(room.name, False)
-    logger.info("end disable_inactive_lights. Occupied rooms %s" % OCCUPIED_ROOMS)
+    log_msg += "Occupied rooms %s" % OCCUPIED_ROOMS
+    logger.info(log_msg)
 
 
 try:
