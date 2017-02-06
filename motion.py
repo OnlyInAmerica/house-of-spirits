@@ -25,6 +25,9 @@ EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES = {}
 OCCUPIED_ROOMS = set([])  # Rooms with motion and no exit events
 EXITED_ROOMS = set([])  # Rooms where an exit event occurred
 
+# Even an allegedly occupied room should be shut off after no motion for this period
+OCCUPIED_ROOM_MOTION_TIMEOUT = datetime.timedelta(hours=2)
+
 for idx, room in enumerate(settings.ROOMS):
     ROOM_NAME_TO_IDX[room.name] = idx
 
@@ -121,9 +124,16 @@ def disable_inactive_lights():
         if not inactive:
             continue
 
+        # An 'occupied' room has a higher motion timeout. This combats events we can't control.
+        # e.g: A flash of light through a window or a neighboring room's lighting triggering motion
+        since_motion = now_date - room.last_motion
+        occupied_timed_out = since_motion > OCCUPIED_ROOM_MOTION_TIMEOUT
+
         if inactive and room.name in settings.ROOM_GRAPH:
             if room in EXITED_ROOMS:
                 log_msg += "Inactive Room %s has an exit event. Power off. " % room.name
+            elif occupied_timed_out:
+                log_msg += "Inactive Room %s has no exit event but is motionless beyond occupied timeout. Power off. " % room.name
             else:
                 log_msg += "Inactive Room %s has no exit event. Keep on. " % room.name
                 continue
