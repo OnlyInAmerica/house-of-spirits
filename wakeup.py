@@ -18,6 +18,10 @@ if is_vacation_mode():
 
 bedroom = settings.ROOMS[3]
 
+if bedroom.is_lit():
+    logger.info("Aborting wakeup: Bedroom is already lit")
+    sys.exit(0)
+
 command = {'xy': LIGHT_EVENING_XY, 'bri': 1, 'on': True}
 
 bedroom.update(command)
