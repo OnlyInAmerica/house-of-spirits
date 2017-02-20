@@ -32,19 +32,24 @@ class Room:
         self.motion_timeout = motion_timeout
 
         self.motion_started = False
-        self.last_motion = None
 
     def __repr__(self):
         return self.name
 
+    def set_last_motion(self, motion_datetime:datetime):
+        env.set_room_last_motion_date(self.name, motion_datetime)
+
+    def get_last_motion(self) -> datetime:
+        return env.get_room_last_motion_date(self.name)
+
     def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
+
+        self.set_last_motion(motion_datetime)
+        self.motion_started = is_motion_start
 
         # Ignore motion events in party mode
         if env.is_party_mode():
             return
-
-        self.last_motion = motion_datetime
-        self.motion_started = is_motion_start
 
         circadian_color = get_current_circadian_color(date=motion_datetime)
 
@@ -52,21 +57,20 @@ class Room:
             self.switch(True, adjust_hue_for_time=False, extra_command=circadian_color.apply_to_command({}))
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
-        if self.motion_pin == PIN_EXTERNAL_SENSOR:
-            self.last_motion = env.get_room_last_motion_date(self.name)
+        last_motion = self.get_last_motion()
 
         # Don't consider a room that never saw motion as timed out
-        if self.last_motion is None:
+        if last_motion is None:
             return False
 
         # Lights cannot time out in party mode
         if env.is_party_mode():
             return False
 
-        since_motion = as_of_date - self.last_motion
+        since_motion = as_of_date - last_motion
         timed_out = since_motion > self.motion_timeout
 
-        logger.info("Room %s last_motion %s (delta %s) is timed out %r" % (self.name, self.last_motion, since_motion, timed_out))
+        logger.info("Room %s last_motion %s (delta %s) is timed out %r" % (self.name, last_motion, since_motion, timed_out))
 
         return timed_out
 
@@ -121,8 +125,12 @@ class LightsOnDuringDayRoom(Room):
     """
 
     def on_motion(self, motion_datetime: datetime, is_motion_start: bool = True):
-        self.last_motion = motion_datetime
+        self.set_last_motion(motion_datetime)
         self.motion_started = is_motion_start
+
+        # Ignore motion events in party mode
+        if env.is_party_mode():
+            return
 
         circadian_color = get_current_circadian_color(date=motion_datetime)
         if is_motion_start:

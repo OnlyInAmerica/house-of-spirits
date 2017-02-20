@@ -49,22 +49,25 @@ logger.info("Prepped exit map %s", EXIT_ROOM_NAME_TO_SOURCE_ROOM_NAMES)
 
 
 def corroborates_exit(exit_dst_room: Room, exit_src_room: Room):
+
+    exit_src_room_last_motion = exit_src_room.get_last_motion()
+    exit_dst_room_last_motion = exit_dst_room.get_last_motion()
     # Is the exit src room still in motion (start but no stop event) or has exit src room motion ended
     # within a very short period of the exit_dst_room
-    result = exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None \
+    result = exit_src_room_last_motion is not None and exit_dst_room_last_motion is not None \
            and (exit_src_room.motion_started or
-                exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=20))
+                exit_dst_room_last_motion - exit_src_room_last_motion < datetime.timedelta(seconds=20))
 
     if not result:
         reason = ""
-        if not (exit_src_room.last_motion is not None):
+        if not (exit_src_room_last_motion is not None):
             reason += "%s has no last motion. " % exit_src_room
-        if not (exit_dst_room.last_motion is not None):
+        if not (exit_dst_room_last_motion is not None):
             reason += "%s has no last motion. " % exit_dst_room
         if not (exit_src_room.motion_started):
             reason += "%s motion has not started. " % exit_src_room
-        if (exit_src_room.last_motion is not None and exit_dst_room.last_motion is not None) and not (exit_dst_room.last_motion - exit_src_room.last_motion < datetime.timedelta(seconds=10)):
-            reason += "Difference between dst (%s) and src (%s) motion is only %s" % (exit_dst_room.name, exit_src_room.name, exit_dst_room.last_motion - exit_src_room.last_motion)
+        if (exit_src_room_last_motion is not None and exit_dst_room_last_motion is not None) and not (exit_dst_room_last_motion - exit_src_room_last_motion < datetime.timedelta(seconds=10)):
+            reason += "Difference between dst (%s) and src (%s) motion is only %s" % (exit_dst_room.name, exit_src_room.name, exit_dst_room_last_motion - exit_src_room_last_motion)
         logger.info("Motion from %s does not corroborate exit from %s because %s" % (exit_dst_room, exit_src_room, reason))
 
     return result
@@ -126,7 +129,7 @@ def disable_inactive_lights():
 
         # An 'occupied' room has a higher motion timeout. This combats events we can't control.
         # e.g: A flash of light through a window or a neighboring room's lighting triggering motion
-        since_motion = now_date - room.last_motion
+        since_motion = now_date - room.get_last_motion()
         occupied_timed_out = since_motion > OCCUPIED_ROOM_MOTION_TIMEOUT
 
         if inactive and room.name in settings.ROOM_GRAPH:
