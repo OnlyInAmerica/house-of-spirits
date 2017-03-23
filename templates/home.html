@@ -30,24 +30,20 @@
     var DISABLED_LABEL_COLOR = "#bcbcbc";
 
     // Room Colors
-    var DARK_COLOR = "#3e3e3e";
-    var LIGHT_COLOR = "#ffa955";
+    var DARK_OCCUPIED_COLOR = "#666666";  // light black
+    var DARK_COLOR = "#3e3e3e";           // dark black
+    var LIGHT_COLOR = "#ffbf80";          // light orante
+    var LIGHT_OCCUPIED_COLOR = "#ffa955"; // saturated orange
 
 
-    var initialHomeState = {
-        'Living Room': $.parseJSON("{{home_status.LivingRoom}}"),
-        'Bedroom': $.parseJSON("{{home_status.Bedroom}}"),
-        'Hallway': $.parseJSON("{{home_status.Hallway}}"),
-        'Kitchen': $.parseJSON("{{home_status.Kitchen}}"),
-        'Stairway': $.parseJSON("{{home_status.Stairway}}")
-    };
+    var initialHomeState = {{home_status|tojson|safe}}
 //     For testing html without template rendering
 //    var initialHomeState = {
-//        'Living Room': false,
-//        'Bedroom': false,
-//        'Hallway': false,
-//        'Kitchen': false,
-//        'Stairway': false
+//        'Living Room': {'lit': false, 'occupied': true},
+//        'Bedroom': {'lit': false, 'occupied': false},
+//        'Hallway': {'lit': true, 'occupied': false},
+//        'Kitchen': {'lit': true, 'occupied': true},
+//        'Stairway': {'lit': false, 'occupied': false}
 //    };
         var initialGuestMode = $.parseJSON("{{guest_mode}}");
         var initialPartyMode = $.parseJSON("{{party_mode}}");
@@ -162,40 +158,40 @@
     $(livingRoom._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
-                var isOn = handleRoomClick('Living Room');
-                livingRoom.fill = getColorForOnState(isOn);
+                var state = handleRoomClick('Living Room');
+                livingRoom.fill = getColorForState(state);
                 two.update();
             });
 
     $(bedRoom._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
-                var isOn = handleRoomClick('Bedroom');
-                bedRoom.fill = getColorForOnState(isOn);
+                var state = handleRoomClick('Bedroom');
+                bedRoom.fill = getColorForState(state);
                 two.update();
             });
 
     $(hall._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
-                var isOn = handleRoomClick('Hallway');
-                hall.fill = getColorForOnState(isOn);
+                var state = handleRoomClick('Hallway');
+                hall.fill = getColorForState(state);
                 two.update();
             });
 
     $(kitchen._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
-                var isOn = handleRoomClick('Kitchen');
-                kitchen.fill = getColorForOnState(isOn);
+                var state = handleRoomClick('Kitchen');
+                kitchen.fill = getColorForState(state);
                 two.update();
             });
 
     $(stairWay._renderer.elem)
             .css('cursor', 'pointer')
             .click(function (e) {
-                var isOn = handleRoomClick('Stairway');
-                stairWay.fill = getColorForOnState(isOn);
+                var state = handleRoomClick('Stairway');
+                stairWay.fill = getColorForState(state);
                 two.update();
             });
 
@@ -229,13 +225,29 @@
 
     function handleRoomClick(roomName) {
         console.log(roomName + ' click!');
-        var isOn = !initialHomeState[roomName];
+        var roomState = initialHomeState[roomName];
+        var isOn = !roomState.lit;
+        roomState.lit = isOn;
         switchRoom(roomName, isOn);
-        return isOn;
+        return roomState;
     }
 
-    function getColorForOnState(isOn) {
-        return isOn ? LIGHT_COLOR : DARK_COLOR;
+    function getColorForState(state) {
+        var isOn = state.lit;
+        var isOccupied = state.occupied;
+        if (isOn) {
+            if (isOccupied) {
+                return LIGHT_OCCUPIED_COLOR;
+            } else {
+                return LIGHT_COLOR;
+            }
+        } else {
+           if (isOccupied) {
+                return DARK_OCCUPIED_COLOR;
+            } else {
+                return DARK_COLOR;
+            }
+        }
     }
 
     function switchRoom(roomName, on) {
@@ -261,7 +273,7 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "text",
                 success: function (data) {
-                    initialHomeState[roomName] = on;
+                    initialHomeState[roomName].lit = on;
                     console.log('Update room ' + roomName + ' with state ' + on);
                     console.log(data);
                 },
@@ -368,23 +380,23 @@
 
         initialHomeState = homestate;
 
-        livingRoom.fill = getColorForOnState(homestate['Living Room']);
+        livingRoom.fill = getColorForState(homestate['Living Room']);
         livingRoom.linewidth = 2;
         livingRoom.stroke = 'white';
 
-        bedRoom.fill = getColorForOnState(homestate['Bedroom']);
+        bedRoom.fill = getColorForState(homestate['Bedroom']);
         bedRoom.linewidth = 2;
         bedRoom.stroke = 'white';
 
-        kitchen.fill = getColorForOnState(homestate['Kitchen']);
+        kitchen.fill = getColorForState(homestate['Kitchen']);
         kitchen.linewidth = 2;
         kitchen.stroke = 'white';
 
-        hall.fill = getColorForOnState(homestate['Hallway']);
+        hall.fill = getColorForState(homestate['Hallway']);
         hall.linewidth = 2;
         hall.stroke = 'white';
 
-        stairWay.fill = getColorForOnState(homestate['Stairway']);
+        stairWay.fill = getColorForState(homestate['Stairway']);
         stairWay.linewidth = 2;
         stairWay.stroke = 'white';
 

@@ -35,13 +35,15 @@ def get_home_status(template_friendly_dict: bool) -> dict:
 
     home_status = {}
     for room in ROOMS:
-        val = room.is_lit()
+        lit = room.is_lit()
+        occupied = env.get_room_occupied(room.name)
         key = room.name
         if template_friendly_dict:
-            val = "true" if val else "false"
+            lit = "true" if lit else "false"
+            occupied = "true" if occupied else "false"
             key = re.sub('[\s+]', '', key)
 
-        home_status[key] = val
+        home_status[key] = {'lit': lit, 'occupied': occupied}
     logger.info(home_status)
     return home_status
 
@@ -152,14 +154,14 @@ def home_status():
 @app.route("/", methods=['GET'])
 def home():
     if is_local_request(flask.request):
-        home_status = get_home_status(template_friendly_dict=True)  # Template engine requires string values
+        home_status_json = get_home_status(template_friendly_dict=False)  # Template engine requires string values
         guest_mode = 'true' if env.is_guest_mode() else 'false'
         party_mode = 'true' if env.is_party_mode() else 'false'
         motion_mode = 'true' if env.is_motion_enabled() else 'false'
         vacation_mode = 'true' if env.is_vacation_mode() else 'false'
 
         return flask.render_template('home.html',
-                                     home_status=home_status,
+                                     home_status=home_status_json,
                                      guest_mode=guest_mode,
                                      party_mode=party_mode,
                                      motion_mode=motion_mode,
