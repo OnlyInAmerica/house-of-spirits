@@ -24,7 +24,7 @@ ROOMS = [
 
     Room(name='Stairway',
          lights=[13],
-         motion_pin=PIN_EXTERNAL_SENSOR,
+         motion_pin=22,
          motion_timeout=datetime.timedelta(minutes=5)),
 ]
 
