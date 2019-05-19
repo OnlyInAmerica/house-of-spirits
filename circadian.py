@@ -21,7 +21,7 @@ while 1:
     logger.info("Sleeping until %s at %s", next_color.name, next_color_date.strftime('%Y/%m/%d %I:%M:%S %p'))
     time.sleep(sleep_time_s + 30)  # Add padding to compensate for sleep inaccuracy
     logger.info("Adjusting hue for %s", next_color.name)
-    command = next_color.apply_to_command({'transitiontime': 60 * 10})  # 60 s transition
+    command = next_color.apply_to_command({'transitiontime': 120 * 10})  # 120 s transition
 
     if next_color.name == 'Day':
         lights = []

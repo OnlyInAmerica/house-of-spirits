@@ -1,6 +1,6 @@
 from phue import Bridge
 
-hue = Bridge('192.168.7.25')
+hue = Bridge('192.168.7.23')
 hue.connect()
 
 COMMAND_FULL_ON = {'on': True, 'bri': 254}

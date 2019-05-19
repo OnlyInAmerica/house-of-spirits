@@ -82,3 +82,5 @@ forecast.json
 
 # Database
 *.db
+
+rsync.sh

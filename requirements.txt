@@ -8,8 +8,11 @@ pytest==2.8.7
 python-dateutil==2.5.3
 python-forecastio==1.3.4
 pytz==2015.7
+pyusb==1.0.2
+RangeParser==0.1.3
 requests==2.9.1
 responses==0.5.1
+scapy==2.4.3rc1.dev159
 six==1.10.0
 tinydb==3.2.1
 ujson==1.35

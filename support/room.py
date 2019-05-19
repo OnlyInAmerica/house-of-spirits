@@ -32,6 +32,8 @@ class Room:
         self.motion_timeout = motion_timeout
 
         self.motion_started = False
+        self.luminance_lux = -1.0
+        self.temp_fahrenheit = -1.0
 
     def __repr__(self):
         return self.name
