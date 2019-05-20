@@ -36,5 +36,4 @@ ROOM_GRAPH = {
     'Kitchen': ['Living Room'],
 }
 
-# Find in Hue app bridge settings
-ZIGBEE_CHANNEL = 25
+ZIGBEE_UDP_PORT = 5005
