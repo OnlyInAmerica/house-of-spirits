@@ -173,10 +173,10 @@ def monitor_zigbee():
             val = m.group(3)
             if addr in PIN_TO_ROOM:
                 room = PIN_TO_ROOM[addr]
-                logger.info("Got zigbee %s for room %s with value %s",
-                            type, room, val)
                 if type == 'motion':
                     is_motion_start = int(val) == 1
+                    logger.info("Got zigbee %s for room %s with value %s",
+                                type, room, val)
                     on_motion(room, is_motion_start)
                 elif type == 'luminance':
                     luminance_lux = float(val)

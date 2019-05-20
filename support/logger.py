@@ -8,7 +8,7 @@ import sys
 DATE_FORMAT = '%Y/%m/%d %I:%M:%S %p'
 
 
-def get_logger(name: str):
+def get_logger(name):
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)

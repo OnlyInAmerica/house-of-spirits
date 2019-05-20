@@ -9,6 +9,11 @@ from scapy.all import *
 from killerbee import *
 from killerbee.scapy_extensions import *
 
+from support.logger import get_logger
+
+# Logging
+logger = get_logger("zigbee")
+
 '''
 Note because of killerbee this must be a python 2 module.
 We'll relate events over UDP to our python3 processes
@@ -33,7 +38,7 @@ def interrupt(signum, frame):
     kb.sniffer_off()
     kb.close()
 
-    print ("{0} Zigbee packets captured".format(packetcount))
+    logger.info("{0} Zigbee packets captured".format(packetcount))
     sys.exit(0)
 
 # Known devices
@@ -41,6 +46,8 @@ known_sources = {
     6623462419764822: "Living Room Sensor",
     6623462419746382: "Kitchen Sensor"
 }
+
+last_motion_map = {}
 
 # UDP
 UDP_IP = "127.0.0.1"
@@ -59,14 +66,14 @@ device = None # Auto select?
 kb = KillerBee(device=device)
 signal.signal(signal.SIGINT, interrupt)
 if not kb.is_valid_channel(channel, subghz_page):
-    print >> sys.stderr, "ERROR: Must specify a valid IEEE 802.15.4 channel for the selected device."
+    logger.error("ERROR: Must specify a valid IEEE 802.15.4 channel for the selected device.")
     kb.close()
     sys.exit(1)
 kb.set_channel(channel, subghz_page)
 kb.sniffer_on()
 
 rf_freq_mhz = kb.frequency(channel, subghz_page) / 1000.0
-print (
+logger.info(
     "Zigbee: listening on \'{0}\', channel {1}, page {2} ({3} MHz), link-type DLT_IEEE802_15_4, capture size 127 bytes".format(
         kb.get_dev_info()[0], channel, subghz_page, rf_freq_mhz))
 
@@ -104,30 +111,34 @@ while True:
                             # print "\t"*3 + "enc cluster: " + str(cluster) + " raw: " + enc_data.getlayer(a).payload.__bytes__().encode('hex')
                             if cluster_bytes[-4:-1] == '\x00\x00\x18':  # Occupancy Sensing, 8-Bit bitmap
                                 is_motion_start = cluster_bytes[-1] == '\x01'
-                                print "%s motion %r" % (name, is_motion_start)
+                                if source in last_motion_map and (is_motion_start == last_motion_map[source]):
+                                    #  Ignore duplicate events
+                                    continue
+                                logger.info("%s motion %r" % (name, is_motion_start))
                                 sock.sendto("motion-%d-%d" % (source, is_motion_start), (UDP_IP, UDP_PORT))
+                                last_motion_map[source] = is_motion_start
                             else:
-                                print "Unknown Motion packet. Cluster: %s" % cluster_bytes.encode('hex')
+                                logger.warn("Unknown Motion packet. Cluster: %s" % cluster_bytes.encode('hex'))
                         elif app_bytes[:4] == '\x00\x04\x04\x01':  # Cluster: Illuminance Measurement (0x0400), Profile: Home Automation (0x0104)
                             if cluster_bytes[-5:-2] == '\x00\x00\x21':  # Measured Value, 16-Bit Unsigned Int
                                 luminance_raw = unpack('<h', cluster_bytes[-2:])[0]
                                 luminance_lux = luminance_raw * LUMINANCE_TO_LUX
-                                print "Room %s luminance %f" % (name, luminance_lux)
+                                logger.info("Room %s luminance %f" % (name, luminance_lux))
                                 sock.sendto("luminance-%d-%f" % (source, luminance_lux), (UDP_IP, UDP_PORT))
                             else:
-                                print "Unknown Luminance packet. Cluster: %s" % cluster_bytes.encode('hex')
+                                logger.warn("Unknown Luminance packet. Cluster: %s" % cluster_bytes.encode('hex'))
                         elif app_bytes[
                              :4] == '\x02\x04\x04\x01':  # Cluster: Temperature Measurement (0x0402), Profile: Home Automation (0x0104)
                             if cluster_bytes[-5:-2] == '\x00\x00\x29':  # Measured Value, 16-Bit Signed Int
                                 temperature_raw = unpack('<h', cluster_bytes[-2:])[0]
                                 temp_celsius = temperature_raw / 100.0
                                 temp_fahrenheit = celsius_to_fahrenheit(temp_celsius)
-                                print "Room %s Temperature %f Fahrenheit" % (name, temp_fahrenheit)
+                                logger.info("Room %s Temperature %f Fahrenheit" % (name, temp_fahrenheit))
                                 sock.sendto("temp-%d-%f" % (source, temp_fahrenheit), (UDP_IP, UDP_PORT))
                             else:
-                                print "Unknown Temperature packet. Cluster: %s" % cluster_bytes.encode('hex')
+                                logger.warn("Unknown Temperature packet. Cluster: %s" % cluster_bytes.encode('hex'))
 
 kb.sniffer_off()
 kb.close()
 
-print "{0} packets captured".format(packetcount)
+logger.info("{0} packets captured".format(packetcount))
