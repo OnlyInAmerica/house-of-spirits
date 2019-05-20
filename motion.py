@@ -97,6 +97,7 @@ def on_motion(room: Room, is_motion_start: bool):
     room.on_motion(now, is_motion_start=is_motion_start)
 
     if is_motion_start:
+        modified_occupancy = (room not in OCCUPIED_ROOMS) or (room in EXITED_ROOMS)
         OCCUPIED_ROOMS.add(room)
         EXITED_ROOMS.discard(room)
         set_room_occupied(room.name, True)
@@ -109,10 +110,12 @@ def on_motion(room: Room, is_motion_start: bool):
                 exit_src_room = settings.ROOMS[ROOM_NAME_TO_IDX[exit_src_room_name]]
                 if exit_src_room in OCCUPIED_ROOMS and corroborates_exit(exit_dst_room, exit_src_room):
                     logger.info("%s motion corroborates exit from %s" % (exit_dst_room, exit_src_room))
+                    modified_occupancy = (exit_src_room in OCCUPIED_ROOMS) or (exit_src_room not in EXITED_ROOMS)
                     EXITED_ROOMS.add(exit_src_room)
                     OCCUPIED_ROOMS.discard(exit_src_room)
                     set_room_occupied(room.name, False)
-        logger.info("Occupied rooms %s" % OCCUPIED_ROOMS)
+        if modified_occupancy:
+            logger.info("Occupied rooms %s" % OCCUPIED_ROOMS)
 
 
 def disable_inactive_lights():
@@ -175,8 +178,8 @@ def monitor_zigbee():
                 room = PIN_TO_ROOM[addr]
                 if type == 'motion':
                     is_motion_start = int(val) == 1
-                    logger.info("Got zigbee %s for room %s with value %s",
-                                type, room, val)
+                    #logger.info("Got zigbee %s for room %s with value %s",
+                    #            type, room, val)
                     on_motion(room, is_motion_start)
                 elif type == 'luminance':
                     luminance_lux = float(val)
