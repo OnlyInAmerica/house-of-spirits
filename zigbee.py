@@ -100,8 +100,7 @@ while True:
                         app_bytes = enc_data.getlayer(ZigbeeAppDataPayload).payload.__bytes__()
                         cluster_bytes = enc_data.getlayer(ZigbeeClusterLibrary).payload.__bytes__()
                         # Occupancy Sensing
-                        if app_bytes[
-                           :4] == '\x06\x04\x04\x01':  # Cluster: Occupancy Sensing (0x0406), Profile: Home Automation (0x0104)
+                        if app_bytes[:4] == '\x06\x04\x04\x01':  # Cluster: Occupancy Sensing (0x0406), Profile: Home Automation (0x0104)
                             # print "\t"*3 + "enc cluster: " + str(cluster) + " raw: " + enc_data.getlayer(a).payload.__bytes__().encode('hex')
                             if cluster_bytes[-4:-1] == '\x00\x00\x18':  # Occupancy Sensing, 8-Bit bitmap
                                 is_motion_start = cluster_bytes[-1] == '\x01'
