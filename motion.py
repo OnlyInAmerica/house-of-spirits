@@ -107,7 +107,7 @@ def on_motion(room: Room, is_motion_start: bool):
             # logger.info("Notifying %s of possible exit to %s" % (exit_src_rooms, exit_dst_room.name))
             for exit_src_room_name in exit_src_rooms:
                 exit_src_room = settings.ROOMS[ROOM_NAME_TO_IDX[exit_src_room_name]]
-                if corroborates_exit(exit_dst_room, exit_src_room):
+                if exit_src_room in OCCUPIED_ROOMS and corroborates_exit(exit_dst_room, exit_src_room):
                     logger.info("%s motion corroborates exit from %s" % (exit_dst_room, exit_src_room))
                     EXITED_ROOMS.add(exit_src_room)
                     OCCUPIED_ROOMS.discard(exit_src_room)
