@@ -90,7 +90,11 @@ while True:
     # if PAN filter active, only process correct PAN or ACK
     scapy_packet = None
     if packet:
-        scapy_packet = Dot15d4FCS(packet['bytes'])
+        try:
+            scapy_packet = Dot15d4FCS(packet['bytes'])
+        except:
+            logger.error("Unable to parse 802.15.4 packet: %s" % packet['bytes'].encode('hex'))
+            continue
     if scapy_packet is not None:  # and packet[1]:
         packetcount += 1
         # unbuffered.write("Packet " + packet['bytes'].encode('hex') + "\n")
