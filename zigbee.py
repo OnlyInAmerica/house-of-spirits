@@ -10,6 +10,7 @@ from killerbee import *
 from killerbee.scapy_extensions import *
 
 from support.logger import get_logger
+from support.zigbee_addrs import SENSOR_ADDR_TO_NAME
 
 # Logging
 logger = get_logger("zigbee")
@@ -40,12 +41,6 @@ def interrupt(signum, frame):
 
     logger.info("{0} Zigbee packets captured".format(packetcount))
     sys.exit(0)
-
-# Known devices
-known_sources = {
-    6623462419764822: "Living Room Sensor",
-    6623462419746382: "Kitchen Sensor"
-}
 
 last_motion_map = {}
 
@@ -100,9 +95,9 @@ while True:
         # unbuffered.write("Packet " + packet['bytes'].encode('hex') + "\n")
         if detect_layer(scapy_packet, ZigbeeSecurityHeader):
             source = scapy_packet.getlayer(ZigbeeSecurityHeader).fields['source']
-            if source in known_sources:
+            if source in SENSOR_ADDR_TO_NAME:
                 # Data from motion sensor
-                name = known_sources[source]
+                name = SENSOR_ADDR_TO_NAME[source]
                 if detect_encryption(scapy_packet):
                     enc_data = kbdecrypt(scapy_packet, network_key)
                     # First determine if this is an occupancy sensing

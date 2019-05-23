@@ -1,6 +1,7 @@
 import datetime
 
 from support.room import Room, LightsOnDuringDayRoom, GuestModeRoom, PIN_EXTERNAL_SENSOR
+from support.zigbee_addrs import SENSOR_NAME_TO_ADDR
 
 # 225 Montecito Light index -> description
 # 1 - Sav's bed
@@ -16,18 +17,18 @@ ROOMS = [
 
     GuestModeRoom(name='Living Room',
                   lights=[16, 22, 28, 29],
-                  motion_pin=6623462419764822, # Zigbee address
+                  motion_pin=SENSOR_NAME_TO_ADDR['Living Room Sensor'], # Zigbee address
                   motion_timeout=datetime.timedelta(minutes=15)),
 
     # A pseud-room, used to cover exit from Living Room
     Room(name='Kitchen Hall',
          lights=[],
-         motion_pin=6623462419764631, # Zigbee address
+         motion_pin=SENSOR_NAME_TO_ADDR['Kitchen Hall Sensor'], # Zigbee address
          motion_timeout=datetime.timedelta(minutes=5)),
 
     Room(name='Kitchen',
          lights=[3, 20, 14, 15],
-         motion_pin=6623462419746382, # Zigbee address
+         motion_pin=SENSOR_NAME_TO_ADDR['Kitchen Sensor'], # Zigbee address
          motion_timeout=datetime.timedelta(minutes=5)),
 
     Room(name='Bedroom',
