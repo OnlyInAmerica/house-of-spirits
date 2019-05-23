@@ -10,7 +10,7 @@ SENSOR_ADDR_TO_NAME = {
 }
 
 SENSOR_NAME_TO_ADDR = {
-    "Living Room Sensor": 6623462419746382,
+    "Living Room Sensor": 6623462419764822,
     "Kitchen Sensor": 6623462419746382,
     "Kitchen Hall Sensor": 6623462419764631
 }
