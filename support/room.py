@@ -59,6 +59,10 @@ class Room:
             self.switch(True, adjust_hue_for_time=False, extra_command=circadian_color.apply_to_command({}))
 
     def is_motion_timed_out(self, as_of_date: datetime) -> bool:
+        # A room in motion shall not be timed out
+        if self.motion_started:
+            return False
+
         last_motion = self.get_last_motion()
 
         # Don't consider a room that never saw motion as timed out
