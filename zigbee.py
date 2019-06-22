@@ -57,8 +57,6 @@ sock = socket.socket(socket.AF_INET, # Internet
 packetcount = 0
 network_key = "270aa9e33947363feea6e52167c107cf".decode('hex')
 channel = 25
-last_dispose = datetime.now()
-DISPOSE_INTERVAL = timedelta(minutes = 20)
 
 subghz_page = 0
 device = None # Auto select?
@@ -142,16 +140,6 @@ while True:
                                 sock.sendto("temp-%d-%f" % (source, temp_fahrenheit), (UDP_IP, UDP_PORT))
                             else:
                                 logger.warn("Unknown Temperature packet. Cluster: %s" % cluster_bytes.encode('hex'))
-
-        if packetcount % 100 == 0: #and datetime.now() - last_dispose > DISPOSE_INTERVAL:
-            #logger.info("Disposing usb resources and restarting")
-            start_time = datetime.now()
-            dispose_resources(kb.dev)
-            last_dispose = datetime.now()
-            kb.sniffer_off()
-            kb.sniffer_on()
-            #logger.info("Disposed usb and restarted sniffer in %s", datetime.now() - start_time)
-
 kb.sniffer_off()
 kb.close()
 
