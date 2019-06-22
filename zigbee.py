@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import sys
 import signal
 import socket
@@ -11,6 +12,8 @@ from killerbee.scapy_extensions import *
 
 from support.logger import get_logger
 from support.zigbee_addrs import SENSOR_ADDR_TO_NAME
+
+from usb.util import dispose_resources
 
 # Logging
 logger = get_logger("zigbee")
@@ -54,10 +57,11 @@ sock = socket.socket(socket.AF_INET, # Internet
 packetcount = 0
 network_key = "270aa9e33947363feea6e52167c107cf".decode('hex')
 channel = 25
+last_dispose = datetime.now()
+DISPOSE_INTERVAL = timedelta(minutes = 20)
 
 subghz_page = 0
 device = None # Auto select?
-
 kb = KillerBee(device=device)
 signal.signal(signal.SIGINT, interrupt)
 if not kb.is_valid_channel(channel, subghz_page):
@@ -80,16 +84,18 @@ def celsius_to_fahrenheit(celsius):
     return (celsius * 9 / 5.0) + 32
 
 while True:
-    packet = kb.pnext()
-    # packet[1] is True if CRC is correct, check removed to have promiscous capture regardless of CRC
-    # if PAN filter active, only process correct PAN or ACK
     scapy_packet = None
-    if packet:
-        try:
-            scapy_packet = Dot15d4FCS(packet['bytes'])
-        except:
+    try:
+        packet = kb.pnext(timeout=0)
+        # packet[1] is True if CRC is correct, check removed to have promiscous capture regardless of CRC
+        # if PAN filter active, only process correct PAN or ACK
+        scapy_packet = Dot15d4FCS(packet['bytes'])
+    except:
+        if packet:
             logger.error("Unable to parse 802.15.4 packet: %s" % packet['bytes'].encode('hex'))
-            continue
+        else:
+            logger.exception("Unable to fetch packet")
+        continue
     if scapy_packet is not None:  # and packet[1]:
         packetcount += 1
         # unbuffered.write("Packet " + packet['bytes'].encode('hex') + "\n")
@@ -136,6 +142,15 @@ while True:
                                 sock.sendto("temp-%d-%f" % (source, temp_fahrenheit), (UDP_IP, UDP_PORT))
                             else:
                                 logger.warn("Unknown Temperature packet. Cluster: %s" % cluster_bytes.encode('hex'))
+
+        if packetcount % 100 == 0: #and datetime.now() - last_dispose > DISPOSE_INTERVAL:
+            #logger.info("Disposing usb resources and restarting")
+            start_time = datetime.now()
+            dispose_resources(kb.dev)
+            last_dispose = datetime.now()
+            kb.sniffer_off()
+            kb.sniffer_on()
+            #logger.info("Disposed usb and restarted sniffer in %s", datetime.now() - start_time)
 
 kb.sniffer_off()
 kb.close()
