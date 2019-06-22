@@ -2,7 +2,7 @@ import datetime
 import threading
 import time
 
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import settings
 
 from support.env import set_motion_enabled, is_motion_enabled, set_room_occupied, get_room_occupied
@@ -76,8 +76,8 @@ def corroborates_exit(exit_dst_room: Room, exit_src_room: Room):
 def on_gpio_motion(triggered_pin: int):
     # TODO : Currently motion pins are used as zigbee addresses
     room = PIN_TO_ROOM[triggered_pin]
-    is_motion_start = GPIO.input(triggered_pin)
-    on_motion(room, is_motion_start)
+#    is_motion_start = GPIO.input(triggered_pin)
+#    on_motion(room, is_motion_start)
 
 def on_motion(room: Room, is_motion_start: bool):
     now = get_local_time()
@@ -221,4 +221,5 @@ try:
 
 
 except KeyboardInterrupt:
-    GPIO.cleanup()
+    #GPIO.cleanup()
+    pass
