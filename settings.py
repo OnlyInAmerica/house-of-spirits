@@ -16,7 +16,7 @@ from support.zigbee_addrs import SENSOR_NAME_TO_ADDR
 ROOMS = [
 
     GuestModeRoom(name='Living Room',
-                  lights=[16, 22, 28, 29],
+                  lights=[16, 22, 28, 29, 32],
                   motion_pin=SENSOR_NAME_TO_ADDR['Living Room Sensor'], # Zigbee address
                   motion_timeout=datetime.timedelta(minutes=15)),
 
@@ -39,7 +39,7 @@ ROOMS = [
 # Room -> Exit Neighbors. All rooms below must have motion detection. All key rooms
 # must have no other exits
 ROOM_GRAPH = {
-    'Living Room': ['Kitchen', 'Kitchen Hall'],
+    'Living Room': ['Kitchen Hall'],
 }
 
 ZIGBEE_UDP_PORT = 5005
